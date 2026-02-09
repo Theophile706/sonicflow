@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +25,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.sonicflow.ui.theme.AccentPrimary
+import com.example.sonicflow.ui.theme.AccentPrimaryLight
+import com.example.sonicflow.ui.theme.AccentSecondary
+import com.example.sonicflow.ui.theme.AccentSecondaryLight
+import com.example.sonicflow.ui.theme.DarkInput
+import com.example.sonicflow.ui.theme.DarkSurface
+import com.example.sonicflow.ui.theme.TextSecondary
 
 @Composable
 fun ArtistCard(
@@ -33,13 +42,14 @@ fun ArtistCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .height(180.dp)
             .clickable(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF2C2C2C),
-                        Color(0xFF1E1E1E)
+                        DarkSurface,
+                        DarkInput
                     )
                 )
             )
@@ -49,13 +59,13 @@ fun ArtistCard(
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(100.dp)
                 .clip(CircleShape)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF9C27B0),
-                            Color(0xFF673AB7)
+                            AccentPrimary,
+                            AccentPrimaryLight
                         )
                     )
                 ),
@@ -75,7 +85,7 @@ fun ArtistCard(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Artist",
                     tint = Color.White,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(50.dp)
                 )
             }
         }
@@ -85,10 +95,11 @@ fun ArtistCard(
         Text(
             text = name,
             color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -102,13 +113,14 @@ fun AlbumCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .height(180.dp)
             .clickable(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF2C2C2C),
-                        Color(0xFF1E1E1E)
+                        DarkSurface,
+                        DarkInput
                     )
                 )
             )
@@ -118,13 +130,13 @@ fun AlbumCard(
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .size(100.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF1E88E5),
-                            Color(0xFF00ACC1)
+                            AccentSecondary,
+                            AccentSecondaryLight
                         )
                     )
                 ),
@@ -136,15 +148,15 @@ fun AlbumCard(
                     contentDescription = "$name album art",
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Icon(
                     imageVector = Icons.Default.Album,
                     contentDescription = "Album",
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(40.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(50.dp)
                 )
             }
         }
@@ -154,10 +166,11 @@ fun AlbumCard(
         Text(
             text = name,
             color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -172,13 +185,14 @@ fun PlaylistCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .height(180.dp)
             .clickable(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF2C2C2C),
-                        Color(0xFF1E1E1E)
+                        DarkSurface,
+                        DarkInput
                     )
                 )
             )
@@ -188,13 +202,13 @@ fun PlaylistCard(
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .size(100.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFFFF6B6B),
-                            Color(0xFFFFA500)
+                            AccentPrimary,
+                            AccentSecondary
                         )
                     )
                 ),
@@ -206,15 +220,15 @@ fun PlaylistCard(
                     contentDescription = "$name album art",
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Default.Album,
+                    imageVector = Icons.Default.QueueMusic,
                     contentDescription = "Playlist",
                     tint = Color.White,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(50.dp)
                 )
             }
         }
@@ -224,17 +238,18 @@ fun PlaylistCard(
         Text(
             text = name,
             color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
 
         if (trackCount > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "$trackCount morceaux",
-                color = Color.Gray,
+                color = TextSecondary,
                 fontSize = 12.sp
             )
         }

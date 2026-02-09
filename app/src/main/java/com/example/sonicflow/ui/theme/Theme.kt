@@ -17,18 +17,18 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AccentOrange,
-    onPrimary = TextBlack,
-    primaryContainer = AccentOrangeDark,
+    primary = AccentPrimary,
+    onPrimary = Color.White,
+    primaryContainer = AccentPrimaryDark,
     onPrimaryContainer = TextPrimary,
 
-    secondary = AccentOrangeLight,
-    onSecondary = TextBlack,
-    secondaryContainer = Color(0xFFFFE5B4),
-    onSecondaryContainer = TextBlack,
+    secondary = AccentSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = AccentSecondaryDark,
+    onSecondaryContainer = Color.White,
 
-    tertiary = GradientEnd,
-    onTertiary = TextPrimary,
+    tertiary = AccentSecondaryLight,
+    onTertiary = TextBlack,
 
     background = DarkBackground,
     onBackground = TextPrimary,
@@ -40,29 +40,29 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = TextSecondary,
 
     error = ErrorColor,
-    onError = TextPrimary,
+    onError = Color.White,
 
     outline = TextTertiary,
-    outlineVariant = Color(0xFF404040),
+    outlineVariant = Color(0xFF3A3A3A),
 
     inverseSurface = TextPrimary,
     inverseOnSurface = DarkBackground,
-    inversePrimary = AccentOrangeDark
+    inversePrimary = AccentPrimaryLight
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = AccentOrange,
-    onPrimary = TextBlack,
-    primaryContainer = AccentOrangeLight,
-    onPrimaryContainer = TextBlack,
+    primary = AccentPrimary,
+    onPrimary = Color.White,
+    primaryContainer = AccentPrimaryLight,
+    onPrimaryContainer = AccentPrimaryDark,
 
-    secondary = AccentOrangeDark,
-    onSecondary = TextPrimary,
-    secondaryContainer = Color(0xFFFFE5B4),
-    onSecondaryContainer = TextBlack,
+    secondary = AccentSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = AccentSecondaryLight,
+    onSecondaryContainer = AccentSecondaryDark,
 
-    tertiary = GradientStart,
-    onTertiary = TextBlack,
+    tertiary = AccentSecondaryDark,
+    onTertiary = Color.White,
 
     background = LightBackground,
     onBackground = TextBlack,
@@ -71,17 +71,17 @@ private val LightColorScheme = lightColorScheme(
     onSurface = TextBlack,
 
     surfaceVariant = LightInput,
-    onSurfaceVariant = Color(0xFF666666),
+    onSurfaceVariant = TextGray,
 
     error = ErrorColor,
-    onError = TextPrimary,
+    onError = Color.White,
 
-    outline = Color(0xFFCCCCCC),
-    outlineVariant = Color(0xFFE0E0E0),
+    outline = Color(0xFFD0D0D0),
+    outlineVariant = Color(0xFFE5E5E5),
 
     inverseSurface = TextBlack,
     inverseOnSurface = LightBackground,
-    inversePrimary = AccentOrange
+    inversePrimary = AccentPrimary
 )
 
 @Composable

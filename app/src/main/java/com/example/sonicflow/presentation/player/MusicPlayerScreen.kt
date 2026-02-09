@@ -55,6 +55,7 @@ fun MusicPlayerScreen(
     val isSmallScreen = screenWidth < 360.dp
     val isMediumScreen = screenWidth >= 360.dp && screenWidth < 400.dp
     var showTrackMenu by remember { mutableStateOf<Track?>(null) }
+    var showPlayerMenu by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -62,8 +63,8 @@ fun MusicPlayerScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFFFA500),
-                        Color(0xFF1E1E1E)
+                        Color(0xFF7C3AED),
+                        Color(0xFF0F0F0F)
                     )
                 )
             )
@@ -99,12 +100,92 @@ fun MusicPlayerScreen(
                             tint = if (isFavorite) Color(0xFFFF4444) else Color.Black
                         )
                     }
-                    IconButton(onClick = { /* Menu */ }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More",
-                            tint = Color.Black
-                        )
+                    Box {
+                        IconButton(onClick = { showPlayerMenu = !showPlayerMenu }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More",
+                                tint = Color.Black
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showPlayerMenu,
+                            onDismissRequest = { showPlayerMenu = false },
+                            modifier = Modifier.background(Color(0xFF252525))
+                        ) {
+                            currentTrack?.let { track ->
+                                DropdownMenuItem(
+                                    text = { Text("Play Next", color = Color.White) },
+                                    onClick = {
+                                        viewModel.playNext(track)
+                                        showPlayerMenu = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.PlayArrow,
+                                            contentDescription = null,
+                                            tint = Color(0xFF7C3AED)
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Add to Queue", color = Color.White) },
+                                    onClick = {
+                                        viewModel.addToQueue(track)
+                                        showPlayerMenu = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.QueueMusic,
+                                            contentDescription = null,
+                                            tint = Color(0xFF06B6D4)
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Add to Playlist", color = Color.White) },
+                                    onClick = {
+                                        showTrackMenu = track
+                                        showPlayerMenu = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.PlaylistAdd,
+                                            contentDescription = null,
+                                            tint = Color(0xFF10B981)
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Share", color = Color.White) },
+                                    onClick = {
+                                        showPlayerMenu = false
+                                        // Share functionality would go here
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Share,
+                                            contentDescription = null,
+                                            tint = Color(0xFFF59E0B)
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("View Album", color = Color.White) },
+                                    onClick = {
+                                        showPlayerMenu = false
+                                        // Navigate to album view
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Album,
+                                            contentDescription = null,
+                                            tint = Color(0xFFEF4444)
+                                        )
+                                    }
+                                )
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -155,12 +236,17 @@ fun MusicPlayerScreen(
                                 }
                             )
                     ) {
-                        // Cercle de fond bleu
+                        // Cercle de fond avec gradient
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(
-                                    color = Color(0xFFF33249),
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF7C3AED),
+                                            Color(0xFF06B6D4)
+                                        )
+                                    ),
                                     shape = CircleShape
                                 )
                         )
@@ -283,7 +369,14 @@ fun MusicPlayerScreen(
                                     modifier = Modifier
                                         .fillMaxHeight()
                                         .fillMaxWidth(currentProgress)
-                                        .background(Color(0xFFFFC107))
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color(0xFF7C3AED),
+                                                    Color(0xFF06B6D4)
+                                                )
+                                            )
+                                        )
                                 )
                             }
 
@@ -291,7 +384,7 @@ fun MusicPlayerScreen(
                             Box(
                                 modifier = Modifier
                                     .size(12.dp)
-                                    .background(Color(0xFFFFC107), CircleShape)
+                                    .background(Color(0xFF7C3AED), CircleShape)
                                     .align(Alignment.CenterStart)
                                     .offset(
                                         x = with(LocalDensity.current) {
@@ -338,7 +431,7 @@ fun MusicPlayerScreen(
                             Icon(
                                 imageVector = Icons.Default.Shuffle,
                                 contentDescription = "Shuffle",
-                                tint = if (isShuffleEnabled) Color(0xFFFFC107) else Color.Gray,
+                                tint = if (isShuffleEnabled) Color(0xFF06B6D4) else Color.Gray,
                                 modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
                             )
                         }
@@ -361,7 +454,15 @@ fun MusicPlayerScreen(
                             onClick = { viewModel.togglePlayPause() },
                             modifier = Modifier
                                 .size(if (isSmallScreen) 64.dp else 72.dp)
-                                .background(Color(0xFFFFC107), CircleShape)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF7C3AED),
+                                            Color(0xFF06B6D4)
+                                        )
+                                    ),
+                                    shape = CircleShape
+                                )
                         ) {
                             Icon(
                                 imageVector = if (playbackState.isPlaying) {
@@ -370,7 +471,7 @@ fun MusicPlayerScreen(
                                     Icons.Default.PlayArrow
                                 },
                                 contentDescription = if (playbackState.isPlaying) "Pause" else "Play",
-                                tint = Color.Black,
+                                tint = Color.White,
                                 modifier = Modifier.size(if (isSmallScreen) 36.dp else 40.dp)
                             )
                         }
@@ -401,7 +502,7 @@ fun MusicPlayerScreen(
                                 contentDescription = "Repeat",
                                 tint = when (repeatMode) {
                                     com.example.sonicflow.data.model.RepeatMode.OFF -> Color.Gray
-                                    else -> Color(0xFFFFC107)
+                                    else -> Color(0xFF06B6D4)
                                 },
                                 modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
                             )

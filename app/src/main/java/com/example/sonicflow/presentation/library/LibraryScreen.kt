@@ -30,6 +30,10 @@ import com.example.sonicflow.presentation.player.PlayerViewModel
 import androidx.compose.foundation.lazy.items
 import com.example.sonicflow.data.model.PlaybackState
 
+enum class SortOrder {
+    NAME, ARTIST, DURATION, DATE_ADDED
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
@@ -51,6 +55,8 @@ fun LibraryScreen(
     val tracksInPlaylist by libraryViewModel.tracksInSelectedPlaylist.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
+    var sortOrder by remember { mutableStateOf(SortOrder.NAME) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = Color.Black,
@@ -71,6 +77,51 @@ fun LibraryScreen(
                             contentDescription = "Back",
                             tint = Color.White
                         )
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { showSortMenu = !showSortMenu }) {
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = "Sort",
+                                tint = Color.White
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false },
+                            modifier = Modifier.background(Color(0xFF252525))
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Name", color = Color.White) },
+                                onClick = {
+                                    sortOrder = SortOrder.NAME
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Artist", color = Color.White) },
+                                onClick = {
+                                    sortOrder = SortOrder.ARTIST
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Duration", color = Color.White) },
+                                onClick = {
+                                    sortOrder = SortOrder.DURATION
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Date Added", color = Color.White) },
+                                onClick = {
+                                    sortOrder = SortOrder.DATE_ADDED
+                                    showSortMenu = false
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -324,6 +375,7 @@ fun AlbumDetailView(
     onTrackClick: (Track) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
+        // Header with back button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -342,9 +394,71 @@ fun AlbumDetailView(
                 text = album,
                 color = Color.White,
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
         }
+
+        // Album art and info section
+        if (tracks.isNotEmpty()) {
+            val firstTrack = tracks.first()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                if (!firstTrack.albumArtUri.isNullOrEmpty()) {
+                    SubcomposeAsyncImage(
+                        model = firstTrack.albumArtUri,
+                        contentDescription = "Album Art",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF2A2A2A)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MusicNote,
+                                    contentDescription = "Loading",
+                                    tint = Color(0xFFFFC107).copy(alpha = 0.5f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        }
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF7C3AED),
+                                        Color(0xFF06B6D4)
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Album,
+                            contentDescription = "Album",
+                            tint = Color.White,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         if (tracks.isEmpty()) {
             Box(
@@ -600,8 +714,13 @@ fun PlaylistItem(
 fun TrackItem(
     track: Track,
     isPlaying: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isFavorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
+    onShowMenu: (() -> Unit)? = null
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -686,6 +805,52 @@ fun TrackItem(
                 tint = Color(0xFFFFC107),
                 modifier = Modifier.size(24.dp)
             )
+        }
+
+        IconButton(
+            onClick = { onToggleFavorite?.invoke() },
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                tint = if (isFavorite) Color(0xFFFF4444) else Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Box {
+            IconButton(
+                onClick = { showMenu = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Menu",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false },
+                modifier = Modifier.background(Color(0xFF252525))
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Add to Favorites", color = Color.White) },
+                    onClick = {
+                        onToggleFavorite?.invoke()
+                        showMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Add to Playlist", color = Color.White) },
+                    onClick = {
+                        onShowMenu?.invoke()
+                        showMenu = false
+                    }
+                )
+            }
         }
     }
 }

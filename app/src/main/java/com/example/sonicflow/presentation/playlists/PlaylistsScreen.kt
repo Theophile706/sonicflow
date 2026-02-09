@@ -2,7 +2,9 @@ package com.example.sonicflow.presentation.playlists
 
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -10,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -252,7 +255,7 @@ fun PlaylistsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         TextButton(onClick = { showCreateDialog = true }) {
-                            Text("Créer une playlist", color = Color(0xFFFFC107))
+                            Text("Créer une playlist", color = Color(0xFF7C3AED))
                         }
                     }
                 }
@@ -457,30 +460,98 @@ fun CreatePlaylistDialog(
     onConfirm: (String) -> Unit
 ) {
     var playlistName by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(0) }
+
+    val colorOptions = listOf(
+        Color(0xFF7C3AED) to "Purple",
+        Color(0xFF06B6D4) to "Cyan",
+        Color(0xFFEF4444) to "Red",
+        Color(0xFF10B981) to "Green",
+        Color(0xFFF59E0B) to "Amber",
+        Color(0xFF3B82F6) to "Blue"
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Créer une playlist") },
-        text = {
-            OutlinedTextField(
-                value = playlistName,
-                onValueChange = { playlistName = it },
-                label = { Text("Nom de la playlist") },
-                singleLine = true
+        title = {
+            Text(
+                "Créer une playlist",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
             )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                // Playlist Name
+                OutlinedTextField(
+                    value = playlistName,
+                    onValueChange = { playlistName = it },
+                    label = { Text("Nom de la playlist") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedLabelColor = Color(0xFF7C3AED),
+                        unfocusedLabelColor = Color.Gray,
+                        focusedBorderColor = Color(0xFF7C3AED),
+                        unfocusedBorderColor = Color.Gray
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Color Selection Label
+                Text(
+                    "Couleur",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Color Palette
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    colorOptions.forEachIndexed { index, (color, _) ->
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(color)
+                                .clickable { selectedColor = index }
+                                .border(
+                                    width = if (selectedColor == index) 3.dp else 0.dp,
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                        )
+                    }
+                }
+            }
         },
         confirmButton = {
             TextButton(
                 onClick = { if (playlistName.isNotBlank()) onConfirm(playlistName) },
                 enabled = playlistName.isNotBlank()
             ) {
-                Text("Créer")
+                Text("Créer", color = Color(0xFF7C3AED))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = Color.Gray)
             }
-        }
+        },
+        containerColor = Color(0xFF1E1E1E),
+        modifier = Modifier.clip(RoundedCornerShape(16.dp))
     )
 }

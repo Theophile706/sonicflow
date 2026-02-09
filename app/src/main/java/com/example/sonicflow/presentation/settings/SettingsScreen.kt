@@ -33,10 +33,16 @@ fun SettingsScreen(
 ) {
     val isDarkMode by viewModel.isDarkModeEnabled.collectAsState()
     var notifications by remember { mutableStateOf(true) }
+    var showAudioQualityDialog by remember { mutableStateOf(false) }
+    var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
+    var showClearCacheDialog by remember { mutableStateOf(false) }
 
     val audioQuality by viewModel.audioQuality.collectAsState()
     val playbackSpeed by viewModel.playbackSpeed.collectAsState()
     val cacheSize by viewModel.cacheSize.collectAsState()
+
+    val audioQualityOptions = listOf("Low", "Normal", "High", "Very High")
+    val playbackSpeedOptions = listOf("0.5x", "0.75x", "1.0x", "1.25x", "1.5x", "2.0x")
 
     Scaffold(
         containerColor = Color(0xFF121212),
@@ -104,7 +110,7 @@ fun SettingsScreen(
                 icon = Icons.Default.MusicNote,
                 title = "Audio Quality",
                 subtitle = audioQuality,
-                onClick = { viewModel.setAudioQuality("Very High") }
+                onClick = { showAudioQualityDialog = true }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -113,7 +119,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Speed,
                 title = "Playback Speed",
                 subtitle = playbackSpeed,
-                onClick = { viewModel.setPlaybackSpeed("1.25x") }
+                onClick = { showPlaybackSpeedDialog = true }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -134,7 +140,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Storage,
                 title = "Clear Cache",
                 subtitle = cacheSize,
-                onClick = { viewModel.clearCache() }
+                onClick = { showClearCacheDialog = true }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -168,6 +174,111 @@ fun SettingsScreen(
             )
         }
     }
+
+    // Audio Quality Dialog
+    if (showAudioQualityDialog) {
+        AlertDialog(
+            onDismissRequest = { showAudioQualityDialog = false },
+            title = { Text("Select Audio Quality", color = Color.White) },
+            text = {
+                Column {
+                    audioQualityOptions.forEach { quality ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    viewModel.setAudioQuality(quality)
+                                    showAudioQualityDialog = false
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = quality == audioQuality,
+                                onClick = {
+                                    viewModel.setAudioQuality(quality)
+                                    showAudioQualityDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(quality, color = Color.White)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAudioQualityDialog = false }) {
+                    Text("Done", color = Color(0xFFFFC107))
+                }
+            },
+            containerColor = Color(0xFF1E1E1E)
+        )
+    }
+
+    // Playback Speed Dialog
+    if (showPlaybackSpeedDialog) {
+        AlertDialog(
+            onDismissRequest = { showPlaybackSpeedDialog = false },
+            title = { Text("Select Playback Speed", color = Color.White) },
+            text = {
+                Column {
+                    playbackSpeedOptions.forEach { speed ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    viewModel.setPlaybackSpeed(speed)
+                                    showPlaybackSpeedDialog = false
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = speed == playbackSpeed,
+                                onClick = {
+                                    viewModel.setPlaybackSpeed(speed)
+                                    showPlaybackSpeedDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(speed, color = Color.White)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPlaybackSpeedDialog = false }) {
+                    Text("Done", color = Color(0xFFFFC107))
+                }
+            },
+            containerColor = Color(0xFF1E1E1E)
+        )
+    }
+
+    // Clear Cache Confirmation Dialog
+    if (showClearCacheDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearCacheDialog = false },
+            title = { Text("Clear Cache", color = Color.White) },
+            text = { Text("Are you sure you want to clear the cache?", color = Color.White) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearCache()
+                    showClearCacheDialog = false
+                }) {
+                    Text("Clear", color = Color(0xFFEF4444))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearCacheDialog = false }) {
+                    Text("Cancel", color = Color(0xFFFFC107))
+                }
+            },
+            containerColor = Color(0xFF1E1E1E)
+        )
+    }
 }
 
 @Composable
@@ -176,7 +287,7 @@ fun SectionTitle(title: String) {
         text = title,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        color = Color(0xFFFFC107),
+        color = Color(0xFF7C3AED),
         modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)
     )
 }
@@ -200,7 +311,7 @@ fun SettingsItem(
         Icon(
             imageVector = icon,
             contentDescription = title,
-            tint = Color(0xFFFFC107),
+            tint = Color(0xFF7C3AED),
             modifier = Modifier.size(24.dp)
         )
 
@@ -250,7 +361,7 @@ fun SettingsSwitch(
         Icon(
             imageVector = icon,
             contentDescription = title,
-            tint = Color(0xFFFFC107),
+            tint = Color(0xFF7C3AED),
             modifier = Modifier.size(24.dp)
         )
 
@@ -276,8 +387,8 @@ fun SettingsSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFFFFC107),
-                checkedTrackColor = Color(0xFFFFC107).copy(alpha = 0.5f),
+                checkedThumbColor = Color(0xFF7C3AED),
+                checkedTrackColor = Color(0xFF7C3AED).copy(alpha = 0.5f),
                 uncheckedThumbColor = Color.Gray,
                 uncheckedTrackColor = Color(0xFF2A2A2A)
             )
