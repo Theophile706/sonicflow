@@ -48,7 +48,6 @@ fun MusicPlayerScreen(
     val repeatMode by viewModel.repeatMode.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
 
-    // Configuration responsive
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
@@ -72,7 +71,6 @@ fun MusicPlayerScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Top Bar
             TopAppBar(
                 title = {
                     Text(
@@ -222,7 +220,7 @@ fun MusicPlayerScreen(
                         .padding(horizontal = if (isSmallScreen) 16.dp else 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 20.dp else 40.dp))
+                    Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 20.dp))
 
                     // Album Art avec cercle (comme dans l'image)
                     Box(
@@ -263,7 +261,7 @@ fun MusicPlayerScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 24.dp else 40.dp))
+                    Spacer(modifier = Modifier.height(if (isSmallScreen) 15.dp else 20.dp))
 
                     // Titre de la chanson (UNE SEULE LIGNE)
                     Text(
@@ -302,7 +300,7 @@ fun MusicPlayerScreen(
                             .padding(horizontal = 16.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 16.dp else 24.dp))
+                    Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 15.dp))
 
                     // WAVEFORM VISUALIZATION - Synchronized with playback
                     AnimatedWaveform(
@@ -322,7 +320,7 @@ fun MusicPlayerScreen(
                             .padding(horizontal = 8.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 16.dp else 24.dp))
+                    Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 15.dp))
 
                     // Progress Bar
                     Column(
@@ -397,6 +395,8 @@ fun MusicPlayerScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
+
+
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -415,7 +415,7 @@ fun MusicPlayerScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 24.dp else 32.dp))
+                    Spacer(modifier = Modifier.height(if (isSmallScreen) 15.dp else 20.dp))
 
                     // Contrôles de lecture
                     Row(
@@ -719,8 +719,8 @@ fun AnimatedWaveform(
         ) {
             val totalBars = waveformData.size
             // Calculer dynamiquement la largeur et l'espacement des barres
-            val totalSpacing = size.width * 0.6f // 60% pour les espacements
-            val totalBarWidth = size.width * 0.4f // 40% pour les barres
+            val totalSpacing = size.width * 0.6f
+            val totalBarWidth = size.width * 0.4f
             val barWidth = (totalBarWidth / totalBars).coerceAtLeast(2f)
             val spacing = (totalSpacing / (totalBars - 1)).coerceAtLeast(2f)
 
@@ -749,9 +749,9 @@ fun AnimatedWaveform(
 
                 // Couleur basée sur la position de lecture
                 val barColor = when {
-                    isNearPlayhead -> Color(0xFFFF6B35) // Orange rougeâtre pour la position actuelle
-                    isBarPlayed -> Color(0xFFFFC107).copy(alpha = 0.9f) // Jaune lumineux pour le passé
-                    else -> Color(0xFFFFC107).copy(alpha = 0.4f) // Jaune faible pour le futur
+                    isNearPlayhead -> Color(0xFFFF6B35)
+                    isBarPlayed -> Color(0xFFFFC107).copy(alpha = 0.9f)
+                    else -> Color(0xFFFFC107).copy(alpha = 0.4f)
                 }
 
                 drawLine(

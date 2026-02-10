@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -117,5 +120,12 @@ class HomeViewModel @Inject constructor(
      */
     fun refreshTracks() {
         _refreshTrigger.value += 1
+    }
+
+    private val _sortOption = MutableStateFlow(SortOption.TITLE_ASC)
+    val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
+
+    fun setSortOption(option: SortOption) {
+        _sortOption.value = option
     }
 }

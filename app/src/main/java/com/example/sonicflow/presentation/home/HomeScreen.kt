@@ -42,6 +42,20 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 
+// ==========================================
+// Enum pour les options de tri
+// ==========================================
+enum class SortOption {
+    TITLE_ASC,
+    TITLE_DESC,
+    ARTIST_ASC,
+    ARTIST_DESC,
+    ALBUM_ASC,
+    ALBUM_DESC,
+    DATE_ADDED_DESC,
+    DATE_ADDED_ASC
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
@@ -60,10 +74,16 @@ fun HomeScreen(
     val playlists by libraryViewModel.playlists.collectAsState()
     val isLoading by homeViewModel.isLoading.collectAsState()
 
+    // ==========================================
+    // MODIFIÉ: Récupérer le tri depuis le ViewModel au lieu de remember
+    // ==========================================
+    val sortOption by homeViewModel.sortOption.collectAsState()
+
     var showSearchBar by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showTrackMenu by remember { mutableStateOf<Track?>(null) }
     var showPlaylistSelector by remember { mutableStateOf<Track?>(null) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
@@ -81,8 +101,8 @@ fun HomeScreen(
         filteredTracks.sortedByDescending { it.dateAdded }.take(10)
     }
 
-    val displayedTracks = remember(tracks, searchQuery) {
-        if (searchQuery.isBlank()) {
+    val displayedTracks = remember(tracks, searchQuery, sortOption) {
+        val filteredTracks = if (searchQuery.isBlank()) {
             tracks
         } else {
             tracks.filter {
@@ -90,6 +110,18 @@ fun HomeScreen(
                         it.artist.contains(searchQuery, ignoreCase = true) ||
                         it.album.contains(searchQuery, ignoreCase = true)
             }
+        }
+
+        // Appliquer le tri
+        when (sortOption) {
+            SortOption.TITLE_ASC -> filteredTracks.sortedBy { it.title.lowercase() }
+            SortOption.TITLE_DESC -> filteredTracks.sortedByDescending { it.title.lowercase() }
+            SortOption.ARTIST_ASC -> filteredTracks.sortedBy { it.artist.lowercase() }
+            SortOption.ARTIST_DESC -> filteredTracks.sortedByDescending { it.artist.lowercase() }
+            SortOption.ALBUM_ASC -> filteredTracks.sortedBy { it.album.lowercase() }
+            SortOption.ALBUM_DESC -> filteredTracks.sortedByDescending { it.album.lowercase() }
+            SortOption.DATE_ADDED_DESC -> filteredTracks.sortedByDescending { it.dateAdded }
+            SortOption.DATE_ADDED_ASC -> filteredTracks.sortedBy { it.dateAdded }
         }
     }
 
@@ -359,36 +391,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // Section Lu récemment
-                    if (recentTracks.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "Lu récemment",
-                                subtitle = "${recentTracks.size} morceaux",
-                                icon = Icons.Default.AccessTime,
-                                iconTint = Color(0xFF4285F4)
-                            )
-                        }
-
-                        item {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(recentTracks) { track ->
-                                    RecentTrackCard(
-                                        track = track,
-                                        isPlaying = playbackState.currentTrack?.id == track.id && playbackState.isPlaying,
-                                        onClick = {
-                                            playerViewModel.playTrack(track)
-                                            onNavigateToPlayer()
-                                        }
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                    }
 
                     // Section Artistes
                     if (artists.isNotEmpty()) {
@@ -471,17 +473,28 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                if (searchQuery.isEmpty()) "Toutes les chansons" else "Résultats",
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                "${displayedTracks.size} morceaux",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
+                            Column {
+                                Text(
+                                    if (searchQuery.isEmpty()) "Toutes les chansons" else "Résultats",
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "${displayedTracks.size} morceaux",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+                            // Bouton de tri
+                            IconButton(onClick = { showSortMenu = true }) {
+                                Icon(
+                                    Icons.Default.Sort,
+                                    contentDescription = "Trier",
+                                    tint = Color(0xFFFFC107)
+                                )
+                            }
                         }
                     }
 
@@ -511,6 +524,21 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // Menu de tri
+    if (showSortMenu) {
+        SortMenuDialog(
+            currentSort = sortOption,
+            onDismiss = { showSortMenu = false },
+            onSortSelected = { newSort ->
+                // ==========================================
+                // MODIFIÉ: Utiliser le ViewModel au lieu de l'état local
+                // ==========================================
+                homeViewModel.setSortOption(newSort)
+                showSortMenu = false
+            }
+        )
     }
 
     // Menu contextuel pour les pistes
@@ -598,6 +626,133 @@ fun HomeScreen(
             },
             containerColor = Color(0xFF1E1E1E)
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SortMenuDialog(
+    currentSort: SortOption,
+    onDismiss: () -> Unit,
+    onSortSelected: (SortOption) -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1E1E1E)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ) {
+            Text(
+                "Trier par",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Divider(color = Color.White.copy(alpha = 0.1f))
+
+            SortOption(
+                text = "Titre (A-Z)",
+                icon = Icons.Default.SortByAlpha,
+                isSelected = currentSort == SortOption.TITLE_ASC,
+                onClick = { onSortSelected(SortOption.TITLE_ASC) }
+            )
+
+            SortOption(
+                text = "Titre (Z-A)",
+                icon = Icons.Default.SortByAlpha,
+                isSelected = currentSort == SortOption.TITLE_DESC,
+                onClick = { onSortSelected(SortOption.TITLE_DESC) }
+            )
+
+            SortOption(
+                text = "Artiste (A-Z)",
+                icon = Icons.Default.Person,
+                isSelected = currentSort == SortOption.ARTIST_ASC,
+                onClick = { onSortSelected(SortOption.ARTIST_ASC) }
+            )
+
+            SortOption(
+                text = "Artiste (Z-A)",
+                icon = Icons.Default.Person,
+                isSelected = currentSort == SortOption.ARTIST_DESC,
+                onClick = { onSortSelected(SortOption.ARTIST_DESC) }
+            )
+
+            SortOption(
+                text = "Album (A-Z)",
+                icon = Icons.Default.Album,
+                isSelected = currentSort == SortOption.ALBUM_ASC,
+                onClick = { onSortSelected(SortOption.ALBUM_ASC) }
+            )
+
+            SortOption(
+                text = "Album (Z-A)",
+                icon = Icons.Default.Album,
+                isSelected = currentSort == SortOption.ALBUM_DESC,
+                onClick = { onSortSelected(SortOption.ALBUM_DESC) }
+            )
+
+            SortOption(
+                text = "Récemment ajouté",
+                icon = Icons.Default.DateRange,
+                isSelected = currentSort == SortOption.DATE_ADDED_DESC,
+                onClick = { onSortSelected(SortOption.DATE_ADDED_DESC) }
+            )
+
+            SortOption(
+                text = "Anciennement ajouté",
+                icon = Icons.Default.DateRange,
+                isSelected = currentSort == SortOption.DATE_ADDED_ASC,
+                onClick = { onSortSelected(SortOption.DATE_ADDED_ASC) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun SortOption(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(if (isSelected) Color(0xFFFFC107).copy(alpha = 0.1f) else Color.Transparent)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (isSelected) Color(0xFFFFC107) else Color.White,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text,
+            color = if (isSelected) Color(0xFFFFC107) else Color.White,
+            fontSize = 16.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            modifier = Modifier.weight(1f)
+        )
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = "Sélectionné",
+                tint = Color(0xFFFFC107),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -1045,11 +1200,6 @@ fun TrackListItem(
         }
     }
 }
-
-// ==========================================
-// AJOUTER CES 2 FONCTIONS À LA FIN DE HomeScreen.kt
-// APRÈS la fonction TrackListItem (après la ligne ~1048)
-// ==========================================
 
 @Composable
 fun ArtistCard(
