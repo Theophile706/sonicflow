@@ -10,7 +10,11 @@ import com.example.sonicflow.data.database.dao.TrackDao
 import com.example.sonicflow.data.database.dao.FavoriteDao
 import com.example.sonicflow.data.database.dao.PlaylistDao
 import com.example.sonicflow.data.preferences.PlaybackStateManager
+import com.example.sonicflow.data.preferences.AudioPreferences
+import com.example.sonicflow.data.preferences.LanguagePreferences
 import com.example.sonicflow.data.repository.MusicRepository
+import com.example.sonicflow.service.GenreDetectionService
+import com.example.sonicflow.service.EqualizerService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -92,5 +96,35 @@ object AppModule {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGenreDetectionService(): GenreDetectionService {
+        return GenreDetectionService()
+    }
+
+    @Provides
+    @Singleton
+    fun provideEqualizerService(player: ExoPlayer): EqualizerService {
+        return EqualizerService(player).apply {
+            initializeEqualizer()
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideAudioPreferences(
+        @ApplicationContext context: Context
+    ): AudioPreferences {
+        return AudioPreferences(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLanguagePreferences(
+        @ApplicationContext context: Context
+    ): LanguagePreferences {
+        return LanguagePreferences(context)
     }
 }

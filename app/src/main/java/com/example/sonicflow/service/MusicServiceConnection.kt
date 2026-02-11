@@ -130,6 +130,10 @@ class MusicServiceConnection @Inject constructor(
         mediaController?.repeatMode = repeatMode
     }
 
+    fun setPlaybackSpeed(speed: Float) {
+        mediaController?.setPlaybackSpeed(speed)
+    }
+
     fun disconnect() {
         controllerFuture?.let {
             MediaController.releaseFuture(it)

@@ -29,10 +29,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.sonicflow.data.model.Track
 import com.example.sonicflow.presentation.components.AlbumArtPlaceholder
+import com.example.sonicflow.presentation.components.EqualizerSection
+import com.example.sonicflow.presentation.components.AudioSettingsSection
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -47,6 +50,12 @@ fun MusicPlayerScreen(
     val isShuffleEnabled by viewModel.isShuffleEnabled.collectAsState()
     val repeatMode by viewModel.repeatMode.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val genreAnalysis by viewModel.currentGenreAnalysis.collectAsState()
+    val equalizerBands by viewModel.equalizerBands.collectAsState()
+    val equalizerEnabled by viewModel.equalizerEnabled.collectAsState()
+    val playbackSpeed by viewModel.playbackSpeed.collectAsState()
+    val audioQuality by viewModel.audioQuality.collectAsState()
+    val language by viewModel.language.collectAsState(initial = com.example.sonicflow.data.preferences.Language.FRENCH)
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -55,6 +64,8 @@ fun MusicPlayerScreen(
     val isMediumScreen = screenWidth >= 360.dp && screenWidth < 400.dp
     var showTrackMenu by remember { mutableStateOf<Track?>(null) }
     var showPlayerMenu by remember { mutableStateOf(false) }
+    var showEqualizerMenu by remember { mutableStateOf(false) }
+    var showAudioSettings by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -90,6 +101,14 @@ fun MusicPlayerScreen(
                     }
                 },
                 actions = {
+                    // Bouton Paramètres audio
+                    IconButton(onClick = { showAudioSettings = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Audio Settings",
+                            tint = Color.Black
+                        )
+                    }
                     // Bouton Favoris
                     IconButton(onClick = { viewModel.toggleFavorite() }) {
                         Icon(
@@ -300,29 +319,39 @@ fun MusicPlayerScreen(
                             .padding(horizontal = 16.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 15.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // WAVEFORM VISUALIZATION - Synchronized with playback
-                    AnimatedWaveform(
-                        isPlaying = playbackState.isPlaying,
-                        trackId = currentTrack.id,
-                        currentPosition = playbackState.currentPosition,
-                        duration = playbackState.duration,
+                    // WAVEFORM VISUALIZATION - Moved up for better prominence
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxWidth(0.95f)
                             .height(
                                 when {
-                                    isSmallScreen -> (screenHeight * 0.08f).coerceIn(50.dp, 70.dp)
-                                    isMediumScreen -> (screenHeight * 0.09f).coerceIn(60.dp, 80.dp)
-                                    else -> (screenHeight * 0.10f).coerceIn(70.dp, 100.dp)
+                                    isSmallScreen -> 85.dp
+                                    isMediumScreen -> 100.dp
+                                    else -> 120.dp
                                 }
                             )
-                            .padding(horizontal = 8.dp)
-                    )
+                            .align(Alignment.CenterHorizontally)
+                            .padding(horizontal = 12.dp, vertical = 12.dp)
+                    ) {
+                        AnimatedWaveform(
+                            isPlaying = playbackState.isPlaying,
+                            trackId = currentTrack.id,
+                            currentPosition = playbackState.currentPosition,
+                            duration = playbackState.duration,
+                            complexity = genreAnalysis?.complexity ?: 0.5f,
+                            energy = genreAnalysis?.energy ?: 0.5f,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 15.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // Progress Bar
+                    // Progress Bar - SECTION COMPLÈTE CORRIGÉE
+// Remplacer la section Progress Bar (environ lignes 298-389)
+
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -330,11 +359,17 @@ fun MusicPlayerScreen(
                         val position = playbackState.currentPosition.coerceIn(0L, duration)
                         val progress = position.toFloat() / duration.toFloat()
                         var isDragging by remember { mutableStateOf(false) }
-                        var dragPosition by remember { mutableStateOf(progress) }
+                        //var dragPosition by remember { mutableStateOf(progress) }
+                        var dragPosition by remember { mutableStateOf(0f) }
 
+                        LaunchedEffect(progress, isDragging) {
+                            if (!isDragging) {
+                                dragPosition = progress
+                            }
+                        }
                         val currentProgress = if (isDragging) dragPosition else progress
 
-                        // Custom Progress Bar - Now draggable avec BoxWithConstraints
+                        // Custom Progress Bar - Draggable
                         BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -384,19 +419,13 @@ fun MusicPlayerScreen(
                                     .size(12.dp)
                                     .background(Color(0xFF7C3AED), CircleShape)
                                     .align(Alignment.CenterStart)
-                                    .offset(
-                                        x = with(LocalDensity.current) {
-                                            (currentProgress * (constraints.maxWidth - 12.dp.toPx())).toDp()
-                                        }
-                                    )
+                                    .offset(x = (currentProgress * (maxWidth - 12.dp)))
                             )
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
-
-
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -415,97 +444,115 @@ fun MusicPlayerScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(if (isSmallScreen) 15.dp else 20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Contrôles de lecture
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = if (isSmallScreen) 8.dp else 12.dp)
                     ) {
-                        // Shuffle
-                        IconButton(
-                            onClick = { viewModel.toggleShuffle() },
-                            modifier = Modifier.size(if (isSmallScreen) 40.dp else 48.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Shuffle",
-                                tint = if (isShuffleEnabled) Color(0xFF06B6D4) else Color.Gray,
-                                modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
-                            )
-                        }
-
-                        // Previous
-                        IconButton(
-                            onClick = { viewModel.skipToPrevious() },
-                            modifier = Modifier.size(if (isSmallScreen) 48.dp else 56.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipPrevious,
-                                contentDescription = "Previous",
-                                tint = Color.White,
-                                modifier = Modifier.size(if (isSmallScreen) 32.dp else 40.dp)
-                            )
-                        }
-
-                        // Play/Pause
-                        IconButton(
-                            onClick = { viewModel.togglePlayPause() },
+                        // Première ligne: Shuffle, Previous, Play/Pause, Next, Repeat
+                        Row(
                             modifier = Modifier
-                                .size(if (isSmallScreen) 64.dp else 72.dp)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            Color(0xFF7C3AED),
-                                            Color(0xFF06B6D4)
-                                        )
-                                    ),
-                                    shape = CircleShape
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Shuffle
+                            IconButton(
+                                onClick = { viewModel.toggleShuffle() },
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 44.dp else 52.dp)
+                                    .weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Shuffle",
+                                    tint = if (isShuffleEnabled) Color(0xFF06B6D4) else Color.Gray,
+                                    modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
                                 )
-                        ) {
-                            Icon(
-                                imageVector = if (playbackState.isPlaying) {
-                                    Icons.Default.Pause
-                                } else {
-                                    Icons.Default.PlayArrow
-                                },
-                                contentDescription = if (playbackState.isPlaying) "Pause" else "Play",
-                                tint = Color.White,
-                                modifier = Modifier.size(if (isSmallScreen) 36.dp else 40.dp)
-                            )
-                        }
+                            }
 
-                        // Next
-                        IconButton(
-                            onClick = { viewModel.skipToNext() },
-                            modifier = Modifier.size(if (isSmallScreen) 48.dp else 56.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipNext,
-                                contentDescription = "Next",
-                                tint = Color.White,
-                                modifier = Modifier.size(if (isSmallScreen) 32.dp else 40.dp)
-                            )
-                        }
+                            // Previous
+                            IconButton(
+                                onClick = { viewModel.skipToPrevious() },
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 48.dp else 56.dp)
+                                    .weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SkipPrevious,
+                                    contentDescription = "Previous",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(if (isSmallScreen) 32.dp else 40.dp)
+                                )
+                            }
 
-                        // Repeat
-                        IconButton(
-                            onClick = { viewModel.toggleRepeat() },
-                            modifier = Modifier.size(if (isSmallScreen) 40.dp else 48.dp)
-                        ) {
-                            Icon(
-                                imageVector = when (repeatMode) {
-                                    com.example.sonicflow.data.model.RepeatMode.ONE -> Icons.Default.RepeatOne
-                                    else -> Icons.Default.Repeat
-                                },
-                                contentDescription = "Repeat",
-                                tint = when (repeatMode) {
-                                    com.example.sonicflow.data.model.RepeatMode.OFF -> Color.Gray
-                                    else -> Color(0xFF06B6D4)
-                                },
-                                modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
-                            )
+                            // Play/Pause - Central button
+                            IconButton(
+                                onClick = { viewModel.togglePlayPause() },
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 72.dp else 74.dp)
+                                    .weight(1.3f)
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                Color(0xFF7C3AED),
+                                                Color(0xFF06B6D4)
+                                            )
+                                        ),
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = if (playbackState.isPlaying) {
+                                        Icons.Default.Pause
+                                    } else {
+                                        Icons.Default.PlayArrow
+                                    },
+                                    contentDescription = if (playbackState.isPlaying) "Pause" else "Play",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(if (isSmallScreen) 40.dp else 48.dp)
+                                )
+                            }
+
+                            // Next
+                            IconButton(
+                                onClick = { viewModel.skipToNext() },
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 48.dp else 56.dp)
+                                    .weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SkipNext,
+                                    contentDescription = "Next",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(if (isSmallScreen) 32.dp else 40.dp)
+                                )
+                            }
+
+                            // Repeat
+                            IconButton(
+                                onClick = { viewModel.toggleRepeat() },
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 44.dp else 52.dp)
+                                    .weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = when (repeatMode) {
+                                        com.example.sonicflow.data.model.RepeatMode.ONE -> Icons.Default.RepeatOne
+                                        else -> Icons.Default.Repeat
+                                    },
+                                    contentDescription = "Repeat",
+                                    tint = when (repeatMode) {
+                                        com.example.sonicflow.data.model.RepeatMode.OFF -> Color.Gray
+                                        else -> Color(0xFF06B6D4)
+                                    },
+                                    modifier = Modifier.size(if (isSmallScreen) 24.dp else 28.dp)
+                                )
+                            }
                         }
                     }
 
@@ -513,8 +560,78 @@ fun MusicPlayerScreen(
                 }
             }
         }
+
+        // Equalizer Modal
+        if (showEqualizerMenu) {
+            EqualizerSection(
+                bands = equalizerBands,
+                isEnabled = equalizerEnabled,
+                onBandLevelChange = { index, level ->
+                    viewModel.setEqualizerBandLevel(index, level)
+                },
+                onToggleEqualizer = {
+                    viewModel.toggleEqualizer()
+                },
+                onReset = {
+                    viewModel.resetEqualizer()
+                },
+                onDismiss = {
+                    showEqualizerMenu = false
+                }
+            )
+        }
+
+        // Audio Settings Modal
+        if (showAudioSettings) {
+            AudioSettingsSection(
+                currentQuality = audioQuality,
+                currentSpeed = playbackSpeed,
+                currentLanguage = language,
+                onQualityChange = { quality ->
+                    viewModel.setAudioQuality(quality)
+                },
+                onSpeedChange = { speed ->
+                    viewModel.setPlaybackSpeed(speed)
+                },
+                onLanguageChange = { lang ->
+                    viewModel.setLanguage(lang)
+                },
+                onDismiss = {
+                    showAudioSettings = false
+                }
+            )
+        }
     }
 }
+@Composable
+fun GenreInfoChip(
+    label: String,
+    value: String,
+    isCompact: Boolean = false
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = label,
+            color = Color(0xFF9CA3AF),
+            fontSize = if (isCompact) 11.sp else 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = if (isCompact) 12.sp else 14.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackContextMenu(
@@ -673,6 +790,8 @@ fun AnimatedWaveform(
     trackId: Long,
     currentPosition: Long = 0L,
     duration: Long = 1L,
+    complexity: Float = 0.5f,
+    energy: Float = 0.5f,
     modifier: Modifier = Modifier
 ) {
     // BoxWithConstraints pour obtenir les dimensions exactes disponibles
@@ -685,9 +804,9 @@ fun AnimatedWaveform(
             (availableWidth / 10f).toInt().coerceIn(30, 50)
         }
 
-        // Générer un pattern unique pour chaque chanson basé sur son ID
-        val waveformData = remember(trackId, barCount) {
-            generateWaveformPattern(trackId, barCount)
+        // Générer un pattern unique pour chaque chanson basé sur son ID et caractéristiques du genre
+        val waveformData = remember(trackId, barCount, complexity, energy) {
+            generateWaveformPattern(trackId, barCount, complexity, energy)
         }
 
         val infiniteTransition = rememberInfiniteTransition(label = "waveform")
@@ -771,7 +890,12 @@ data class WaveformBar(
     val speed: Int
 )
 
-fun generateWaveformPattern(trackId: Long, barCount: Int = 40): List<WaveformBar> {
+fun generateWaveformPattern(
+    trackId: Long,
+    barCount: Int = 40,
+    complexity: Float = 0.5f,
+    energy: Float = 0.5f
+): List<WaveformBar> {
     // Utiliser l'ID de la chanson comme seed pour générer un pattern unique
     val seed = trackId.hashCode()
     val random = Random(seed)
@@ -786,10 +910,19 @@ fun generateWaveformPattern(trackId: Long, barCount: Int = 40): List<WaveformBar
         val baseHeight = (wave1 + wave2) / 2f
 
         val randomVariation = random.nextFloat() * 0.5f + 0.3f
-        val height = ((baseHeight + 1f) / 2f * randomVariation + 0.35f).coerceIn(0.35f, 1f)
+        var height = ((baseHeight + 1f) / 2f * randomVariation + 0.35f).coerceIn(0.35f, 1f)
 
-        // Vitesse d'animation variée pour un effet plus dynamique
-        val speed = random.nextInt(350, 850)
+        // Ajuster la hauteur en fonction de l'énergie et de la complexité du genre
+        height = height * (0.5f + energy) // Plus l'énergie est haute, plus les barres sont hautes
+        height = height.coerceIn(0.35f, 1f)
+
+        // Vitesse d'animation variée basée sur la complexité
+        // Chansons complexes = animation plus rapide/variée
+        // Chansons simples = animation plus lente/uniforme
+        val speedBase = (350 + (complexity * 500f)).toInt()
+        val speedVariation = (150 * complexity).toInt()
+        val speed = random.nextInt(speedBase - speedVariation, speedBase + speedVariation)
+            .coerceIn(200, 1200)
 
         bars.add(WaveformBar(height, speed))
     }

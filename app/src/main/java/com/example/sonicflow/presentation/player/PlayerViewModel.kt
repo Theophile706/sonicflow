@@ -8,9 +8,16 @@ import com.example.sonicflow.data.model.PlaybackState
 import com.example.sonicflow.data.model.RepeatMode
 import com.example.sonicflow.data.model.SortType
 import com.example.sonicflow.data.model.Track
+import com.example.sonicflow.data.model.GenreAnalysis
+import com.example.sonicflow.data.preferences.AudioQuality
+import com.example.sonicflow.data.preferences.Language
 import com.example.sonicflow.data.repository.MusicRepository
 import com.example.sonicflow.data.preferences.PlaybackStateManager
+import com.example.sonicflow.data.preferences.AudioPreferences
+import com.example.sonicflow.data.preferences.LanguagePreferences
 import com.example.sonicflow.service.MusicServiceConnection
+import com.example.sonicflow.service.GenreDetectionService
+import com.example.sonicflow.service.EqualizerService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -20,7 +27,11 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
     private val musicServiceConnection: MusicServiceConnection,
-    private val playbackStateManager: PlaybackStateManager
+    private val playbackStateManager: PlaybackStateManager,
+    private val genreDetectionService: GenreDetectionService,
+    private val equalizerService: EqualizerService,
+    private val audioPreferences: AudioPreferences,
+    private val languagePreferences: LanguagePreferences
 ) : ViewModel() {
 
     private val _tracks = MutableStateFlow<List<Track>>(emptyList())
@@ -47,6 +58,24 @@ class PlayerViewModel @Inject constructor(
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
+    // Genre detection
+    private val _currentGenreAnalysis = MutableStateFlow<GenreAnalysis?>(null)
+    val currentGenreAnalysis: StateFlow<GenreAnalysis?> = _currentGenreAnalysis.asStateFlow()
+
+    // Audio preferences
+    private val _playbackSpeed = MutableStateFlow(1.0f)
+    val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
+
+    private val _audioQuality = MutableStateFlow(AudioQuality.NORMAL)
+    val audioQuality: StateFlow<AudioQuality> = _audioQuality.asStateFlow()
+
+    // Equalizer
+    val equalizerBands = equalizerService.bands
+    val equalizerEnabled = equalizerService.isEnabled
+
+    // Language
+    val language = languagePreferences.language
+
     // Queue management
     private val _queue = MutableStateFlow<List<Track>>(emptyList())
     val queue: StateFlow<List<Track>> = _queue.asStateFlow()
@@ -63,6 +92,39 @@ class PlayerViewModel @Inject constructor(
         observeMusicService()
         restorePlaybackState()
         observeFavoriteStatus()
+        loadAudioPreferences()
+        observeCurrentTrackGenre()
+    }
+
+    private fun loadAudioPreferences() {
+        viewModelScope.launch {
+            audioPreferences.playbackSpeed.collect { speed ->
+                _playbackSpeed.value = speed
+                musicServiceConnection.setPlaybackSpeed(speed)
+            }
+        }
+        viewModelScope.launch {
+            audioPreferences.audioQuality.collect { quality ->
+                _audioQuality.value = quality
+            }
+        }
+    }
+
+    private fun observeCurrentTrackGenre() {
+        viewModelScope.launch {
+            playbackState.collect { state ->
+                state.currentTrack?.let { track ->
+                    val analysis = genreDetectionService.detectGenre(
+                        title = track.title,
+                        artist = track.artist,
+                        album = track.album,
+                        duration = track.duration,
+                        filePath = track.path
+                    )
+                    _currentGenreAnalysis.value = analysis
+                }
+            }
+        }
     }
 
     private fun scanMediaStore() {
@@ -367,19 +429,6 @@ class PlayerViewModel @Inject constructor(
         return String.format("%d:%02d", minutes, seconds)
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        viewModelScope.launch {
-            _playbackState.value.currentTrack?.let { track ->
-                savePlaybackState(
-                    trackId = track.id,
-                    position = _playbackState.value.currentPosition,
-                    isPlaying = _playbackState.value.isPlaying
-                )
-            }
-        }
-    }
-
     /**
      * Ajoute une piste à la file d'attente
      */
@@ -412,6 +461,45 @@ class PlayerViewModel @Inject constructor(
             }
 
             _queue.value = currentQueue
+        }
+    }
+
+    // Playback speed control
+    fun setPlaybackSpeed(speed: Float) {
+        val clampedSpeed = speed.coerceIn(0.5f, 2.0f)
+        _playbackSpeed.value = clampedSpeed
+        musicServiceConnection.setPlaybackSpeed(clampedSpeed)
+
+        viewModelScope.launch {
+            audioPreferences.setPlaybackSpeed(clampedSpeed)
+        }
+    }
+
+    // Audio quality control
+    fun setAudioQuality(quality: AudioQuality) {
+        _audioQuality.value = quality
+        viewModelScope.launch {
+            audioPreferences.setAudioQuality(quality)
+        }
+    }
+
+    // Equalizer control
+    fun setEqualizerBandLevel(bandIndex: Int, level: Int) {
+        equalizerService.setBandLevel(bandIndex, level)
+    }
+
+    fun toggleEqualizer() {
+        equalizerService.toggleEqualizer()
+    }
+
+    fun resetEqualizer() {
+        equalizerService.resetEqualizer()
+    }
+
+    // Language control
+    fun setLanguage(language: Language) {
+        viewModelScope.launch {
+            languagePreferences.setLanguage(language)
         }
     }
 }
