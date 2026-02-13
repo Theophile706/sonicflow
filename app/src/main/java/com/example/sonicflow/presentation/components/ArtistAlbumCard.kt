@@ -180,10 +180,11 @@ fun PlaylistCard(
     name: String,
     trackCount: Int = 0,
     imageUri: String? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(180.dp)
             .clickable(onClick = onClick)

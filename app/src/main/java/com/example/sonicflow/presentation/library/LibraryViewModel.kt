@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sonicflow.data.database.entities.PlaylistEntity
 import com.example.sonicflow.data.model.Track
 import com.example.sonicflow.data.repository.MusicRepository
+import com.example.sonicflow.data.database.dao.PlayHistoryDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -19,7 +20,8 @@ sealed class LibraryTab {
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
-    private val musicRepository: MusicRepository
+    private val musicRepository: MusicRepository,
+    private val playHistoryDao: PlayHistoryDao
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow<LibraryTab>(LibraryTab.Favorites)
@@ -35,6 +37,16 @@ class LibraryViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // ========== RECENTLY PLAYED ==========
+    val recentlyPlayedTracks: StateFlow<List<Track>> =
+        playHistoryDao.getRecentlyPlayedTracks(10)
+            .map { tracks -> tracks.take(5) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     // ========== PLAYLISTS ==========
     val playlists: StateFlow<List<PlaylistEntity>> = musicRepository.getAllPlaylists()

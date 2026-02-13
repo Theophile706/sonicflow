@@ -9,6 +9,8 @@ import com.example.sonicflow.data.database.AppDatabase
 import com.example.sonicflow.data.database.dao.TrackDao
 import com.example.sonicflow.data.database.dao.FavoriteDao
 import com.example.sonicflow.data.database.dao.PlaylistDao
+import com.example.sonicflow.data.database.dao.RecentlyPlayedDao
+import com.example.sonicflow.data.database.dao.PlayHistoryDao
 import com.example.sonicflow.data.preferences.PlaybackStateManager
 import com.example.sonicflow.data.preferences.AudioPreferences
 import com.example.sonicflow.data.preferences.LanguagePreferences
@@ -60,13 +62,28 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideRecentlyPlayedDao(database: AppDatabase): RecentlyPlayedDao {
+        return database.recentlyPlayedDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePlayHistoryDao(database: AppDatabase): PlayHistoryDao {
+        return database.playHistoryDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMusicRepository(
         @ApplicationContext context: Context,
         trackDao: TrackDao,
         favoriteDao: FavoriteDao,
-        playlistDao: PlaylistDao
+        playlistDao: PlaylistDao,
+        recentlyPlayedDao: RecentlyPlayedDao
     ): MusicRepository {
-        return MusicRepository(context, trackDao, favoriteDao, playlistDao)
+        return MusicRepository(
+            context, trackDao, favoriteDao, playlistDao, recentlyPlayedDao
+        )
     }
 
     @Provides

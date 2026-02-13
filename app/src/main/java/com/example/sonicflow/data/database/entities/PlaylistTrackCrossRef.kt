@@ -21,3 +21,11 @@ data class PlaylistTrackCrossRef(
     val position: Int = 0,
     val addedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "play_history")
+data class PlayHistoryEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val trackId: Long,
+    val playedAt: Long = System.currentTimeMillis()
+)

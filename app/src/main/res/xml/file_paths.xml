@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Chemin pour les fichiers musicaux sur le stockage externe -->
+    <external-path
+        name="external_files"
+        path="." />
+
+    <!-- Chemin pour les fichiers dans le stockage interne de l'app -->
+    <files-path
+        name="app_files"
+        path="." />
+
+    <!-- Chemin pour le cache -->
+    <cache-path
+        name="cache"
+        path="." />
+
+    <!-- Chemin spécifique pour la musique -->
+    <external-path
+        name="music"
+        path="Music/" />
+
+    <!-- Chemin pour le stockage externe complet -->
+    <root-path
+        name="root"
+        path="." />
+</paths>

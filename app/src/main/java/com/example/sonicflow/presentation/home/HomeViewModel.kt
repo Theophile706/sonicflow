@@ -99,10 +99,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Appelé quand les permissions sont accordées
-     * pour recharger immédiatement les médias
-     */
     fun onPermissionsGranted() {
         viewModelScope.launch {
             // Petit délai pour laisser le système se préparer
@@ -115,9 +111,6 @@ class HomeViewModel @Inject constructor(
         _error.value = null
     }
 
-    /**
-     * Force un rechargement manuel des tracks
-     */
     fun refreshTracks() {
         _refreshTrigger.value += 1
     }

@@ -1,6 +1,7 @@
 package com.example.sonicflow.service
 
 import android.media.audiofx.Equalizer
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,7 @@ data class EqualizerBand(
     val level: Int = 0 // -15 to 15 dB
 )
 
+@OptIn(UnstableApi::class)
 class EqualizerService(private val player: ExoPlayer) {
     
     private val _bands = MutableStateFlow<List<EqualizerBand>>(emptyList())

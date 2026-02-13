@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -34,6 +35,9 @@ import coil.request.ImageRequest
 import com.example.sonicflow.data.database.entities.PlaylistEntity
 import com.example.sonicflow.data.model.Track
 import com.example.sonicflow.presentation.components.PlaylistCard
+import com.example.sonicflow.presentation.home.FavoriteTrackCard
+import com.example.sonicflow.presentation.home.RecentTrackCard
+import com.example.sonicflow.presentation.home.SectionHeader
 import com.example.sonicflow.presentation.library.LibraryViewModel
 import com.example.sonicflow.presentation.player.PlayerViewModel
 
@@ -41,6 +45,7 @@ import com.example.sonicflow.presentation.player.PlayerViewModel
 @Composable
 fun PlaylistsScreen(
     onNavigateToPlayer: () -> Unit,
+    onNavigateToLibrary: () -> Unit,
     playerViewModel: PlayerViewModel = hiltViewModel(),
     libraryViewModel: LibraryViewModel = hiltViewModel()
 ) {
@@ -49,6 +54,8 @@ fun PlaylistsScreen(
     val tracksInPlaylist by libraryViewModel.tracksInSelectedPlaylist.collectAsState()
     val playbackState by playerViewModel.playbackState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
+    val favoriteTracks by libraryViewModel.favoriteTracks.collectAsState()
+    val recentlyPlayedTracks by libraryViewModel.recentlyPlayedTracks.collectAsState()
 
     if (selectedPlaylistId != null) {
         var showTrackMenu by remember { mutableStateOf<Track?>(null) }
@@ -232,52 +239,155 @@ fun PlaylistsScreen(
                 )
             }
         ) { padding ->
-            if (playlists.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.LibraryMusic,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = Color.Gray
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(Color.Black),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                // Section Favoris
+                if (favoriteTracks.isNotEmpty()) {
+                    item {
+                        SectionHeader(
+                            title = "Aimé(s)",
+                            subtitle = "${favoriteTracks.size} morceaux",
+                            icon = Icons.Default.Favorite,
+                            iconTint = Color(0xFFFF4444)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "Aucune playlist",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { showCreateDialog = true }) {
-                            Text("Créer une playlist", color = Color(0xFF7C3AED))
+                    }
+
+                    item {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(favoriteTracks.take(10)) { track ->
+                                FavoriteTrackCard(
+                                    track = track,
+                                    isPlaying = playbackState.currentTrack?.id == track.id && playbackState.isPlaying,
+                                    onClick = {
+                                        playerViewModel.playTrack(track)
+                                        onNavigateToPlayer()
+                                    }
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .background(Color.Black),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(playlists) { playlist ->
-                        PlaylistCard(
-                            name = playlist.name,
-                            trackCount = 0, // TODO: Get actual track count from playlist
-                            onClick = {
-                                libraryViewModel.selectPlaylist(playlist.id)
-                            }
+
+                // Section Lecture récente
+                if (recentlyPlayedTracks.isNotEmpty()) {
+                    item {
+                        val uniqueRecentTracks = recentlyPlayedTracks
+                            .distinctBy { it.id }  // Élimine les doublons par ID
+                            .take(5)
+
+                        SectionHeader(
+                            title = "Lecture récente",
+                            subtitle = "${uniqueRecentTracks.size} morceaux",
+                            icon = Icons.Default.History,
+                            iconTint = Color(0xFF06B6D4)
                         )
+                    }
+
+                    item {
+                        val uniqueRecentTracks = recentlyPlayedTracks
+                            .distinctBy { it.id }
+                            .take(5)
+
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(uniqueRecentTracks) { track ->
+                                RecentTrackCard(
+                                    track = track,
+                                    isPlaying = playbackState.currentTrack?.id == track.id && playbackState.isPlaying,
+                                    onClick = {
+                                        playerViewModel.playTrack(track)
+                                        onNavigateToPlayer()
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+
+                // Playlists section title
+                item {
+                    Text(
+                        "Listes de lecture",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+
+                if (playlists.isNotEmpty()) {
+                    items(playlists.chunked(2)) { playlistPair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            PlaylistCard(
+                                name = playlistPair[0].name,
+                                trackCount = 0,
+                                onClick = {
+                                    libraryViewModel.selectPlaylist(playlistPair[0].id)
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (playlistPair.size > 1) {
+                                PlaylistCard(
+                                    name = playlistPair[1].name,
+                                    trackCount = 0,
+                                    onClick = {
+                                        libraryViewModel.selectPlaylist(playlistPair[1].id)
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(80.dp))
+                    }
+                } else {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.LibraryMusic,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(80.dp),
+                                    tint = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "Aucune playlist",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = { showCreateDialog = true }) {
+                                    Text("Créer une playlist", color = Color(0xFF7C3AED))
+                                }
+                            }
+                        }
                     }
                 }
             }

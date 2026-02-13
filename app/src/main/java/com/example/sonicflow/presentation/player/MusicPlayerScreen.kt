@@ -201,6 +201,20 @@ fun MusicPlayerScreen(
                                         )
                                     }
                                 )
+                                DropdownMenuItem(
+                                    text = { Text("Delete", color = Color.White) },
+                                    onClick = {
+                                        viewModel.deleteTrack(track)
+                                        showPlayerMenu = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = Color(0xFFEF4444)
+                                        )
+                                    }
+                                )
                             }
                         }
                     }
@@ -416,7 +430,7 @@ fun MusicPlayerScreen(
                             // Draggable thumb
                             Box(
                                 modifier = Modifier
-                                    .size(12.dp)
+                                    .size(1.dp)
                                     .background(Color(0xFF7C3AED), CircleShape)
                                     .align(Alignment.CenterStart)
                                     .offset(x = (currentProgress * (maxWidth - 12.dp)))
@@ -494,7 +508,7 @@ fun MusicPlayerScreen(
                             IconButton(
                                 onClick = { viewModel.togglePlayPause() },
                                 modifier = Modifier
-                                    .size(if (isSmallScreen) 72.dp else 74.dp)
+                                    .size(if (isSmallScreen) 72.dp else 70.dp)
                                     .weight(1.3f)
                                     .background(
                                         brush = Brush.linearGradient(

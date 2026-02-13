@@ -2,6 +2,7 @@ package com.example.sonicflow.presentation
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -29,8 +29,6 @@ import com.example.sonicflow.presentation.home.HomeScreen
 import com.example.sonicflow.presentation.player.MusicPlayerScreen
 import com.example.sonicflow.presentation.player.PlayerViewModel
 import com.example.sonicflow.presentation.playlists.PlaylistsScreen
-import com.example.sonicflow.presentation.settings.SettingsScreen
-import com.example.sonicflow.presentation.settings.SettingsViewModel
 import com.example.sonicflow.service.MusicService
 import com.example.sonicflow.service.MusicServiceConnection
 import com.example.sonicflow.ui.theme.SonicFlowTheme
@@ -88,7 +86,7 @@ class MainActivity : ComponentActivity() {
 
         val allGranted = permissions.all {
             ContextCompat.checkSelfPermission(this, it) ==
-                    android.content.pm.PackageManager.PERMISSION_GRANTED
+                    PackageManager.PERMISSION_GRANTED
         }
 
         if (allGranted) {
@@ -135,8 +133,7 @@ fun AppNavigation(musicServiceConnection: MusicServiceConnection) {
                     composable("home") {
                         HomeScreen(
                             onNavigateToPlayer = { navController.navigate("player") },
-                            onNavigateToLibrary = { navController.navigate("favorites") },
-                            onNavigateToSettings = { navController.navigate("settings") }
+                            onNavigateToLibrary = { navController.navigate("favorites") }
                         )
                     }
 
@@ -154,7 +151,8 @@ fun AppNavigation(musicServiceConnection: MusicServiceConnection) {
 
                     composable("playlists") {
                         PlaylistsScreen(
-                            onNavigateToPlayer = { navController.navigate("player") }
+                            onNavigateToPlayer = { navController.navigate("player") },
+                            onNavigateToLibrary = { navController.navigate("favorites") }
                         )
                     }
 
@@ -173,16 +171,6 @@ fun AppNavigation(musicServiceConnection: MusicServiceConnection) {
                         MusicPlayerScreen(
                             viewModel = playerViewModel,
                             onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-
-                    composable("settings") {
-                        SettingsScreen(
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToHome = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
-                            onNavigateToArtists = { navController.navigate("artists") { popUpTo("home") } },
-                            onNavigateToAlbums = { navController.navigate("albums") { popUpTo("home") } },
-                            onNavigateToPlaylists = { navController.navigate("playlists") { popUpTo("home") } }
                         )
                     }
                 }

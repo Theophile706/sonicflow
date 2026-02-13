@@ -1,6 +1,7 @@
 package com.example.sonicflow.presentation.home
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.painterResource
@@ -33,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.sonicflow.data.model.Track
 import com.example.sonicflow.presentation.components.AlbumArtPlaceholder
@@ -41,10 +44,8 @@ import com.example.sonicflow.presentation.player.PlayerViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
+import java.io.File
 
-// ==========================================
-// Enum pour les options de tri
-// ==========================================
 enum class SortOption {
     TITLE_ASC,
     TITLE_DESC,
@@ -61,11 +62,11 @@ enum class SortOption {
 fun HomeScreen(
     onNavigateToPlayer: () -> Unit,
     onNavigateToLibrary: () -> Unit,
-    onNavigateToSettings: () -> Unit,
     homeViewModel: HomeViewModel = hiltViewModel(),
     playerViewModel: PlayerViewModel = hiltViewModel(),
     libraryViewModel: LibraryViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val tracks by playerViewModel.tracks.collectAsState()
     val playbackState by playerViewModel.playbackState.collectAsState()
     val favoriteTracks by libraryViewModel.favoriteTracks.collectAsState()
@@ -74,9 +75,6 @@ fun HomeScreen(
     val playlists by libraryViewModel.playlists.collectAsState()
     val isLoading by homeViewModel.isLoading.collectAsState()
 
-    // ==========================================
-    // MODIFIÉ: Récupérer le tri depuis le ViewModel au lieu de remember
-    // ==========================================
     val sortOption by homeViewModel.sortOption.collectAsState()
 
     var showSearchBar by remember { mutableStateOf(false) }
@@ -84,9 +82,22 @@ fun HomeScreen(
     var showTrackMenu by remember { mutableStateOf<Track?>(null) }
     var showPlaylistSelector by remember { mutableStateOf<Track?>(null) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf<String?>(null) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Afficher le snackbar quand nécessaire
+    LaunchedEffect(showSnackbar) {
+        showSnackbar?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            showSnackbar = null
+        }
+    }
 
     val recentTracks = remember(tracks, searchQuery) {
         val filteredTracks = if (searchQuery.isBlank()) {
@@ -147,15 +158,12 @@ fun HomeScreen(
     // Auto-reload avec retry mechanism
     LaunchedEffect(permissionsState.allPermissionsGranted) {
         if (permissionsState.allPermissionsGranted) {
-            // Premier essai immédiat
             homeViewModel.refreshTracks()
 
-            // Si toujours vide après 1 seconde, réessayer
             delay(1000)
             if (tracks.isEmpty()) {
                 homeViewModel.scanMedia()
 
-                // Réessayer encore après 2 secondes
                 delay(2000)
                 if (tracks.isEmpty()) {
                     homeViewModel.scanMedia()
@@ -164,7 +172,6 @@ fun HomeScreen(
         }
     }
 
-    // Focus sur la barre de recherche quand elle s'ouvre
     LaunchedEffect(showSearchBar) {
         if (showSearchBar) {
             delay(100)
@@ -173,6 +180,16 @@ fun HomeScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color(0xFF2D2D2D),
+                    contentColor = Color.White,
+                    actionColor = Color(0xFFFFC107)
+                )
+            }
+        },
         containerColor = Color(0xFF000000),
         topBar = {
             TopAppBar(
@@ -242,13 +259,6 @@ fun HomeScreen(
                                 tint = Color.White
                             )
                         }
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                Icons.Default.Settings,
-                                contentDescription = "Paramètres",
-                                tint = Color.White
-                            )
-                        }
                     } else if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
                             Icon(
@@ -276,7 +286,6 @@ fun HomeScreen(
                     .background(Color.Black),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // Indicateur de chargement
                 if (isLoading) {
                     item {
                         Box(
@@ -354,115 +363,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Afficher les sections seulement si pas de recherche active
-                if (searchQuery.isEmpty() && !isLoading) {
-                    // Section Favoris
-                    if (favoriteTracks.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "Aimé(s)",
-                                subtitle = "${favoriteTracks.size} morceaux",
-                                icon = Icons.Default.Favorite,
-                                iconTint = Color(0xFFFF4444),
-                                onClick = {
-                                    libraryViewModel.selectTab(com.example.sonicflow.presentation.library.LibraryTab.Favorites)
-                                    onNavigateToLibrary()
-                                }
-                            )
-                        }
-
-                        item {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(favoriteTracks.take(10)) { track ->
-                                    FavoriteTrackCard(
-                                        track = track,
-                                        isPlaying = playbackState.currentTrack?.id == track.id && playbackState.isPlaying,
-                                        onClick = {
-                                            playerViewModel.playTrack(track)
-                                            onNavigateToPlayer()
-                                        }
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                    }
-
-
-                    // Section Artistes
-                    if (artists.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "Artistes",
-                                subtitle = "${artists.size} artistes",
-                                icon = Icons.Default.Person,
-                                iconTint = Color(0xFFAB47BC),
-                                onClick = {
-                                    libraryViewModel.selectTab(com.example.sonicflow.presentation.library.LibraryTab.Artists)
-                                    onNavigateToLibrary()
-                                }
-                            )
-                        }
-
-                        item {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(artists.take(10)) { artist ->
-                                    ArtistCard(
-                                        name = artist,
-                                        onClick = {
-                                            libraryViewModel.selectArtist(artist)
-                                            libraryViewModel.selectTab(com.example.sonicflow.presentation.library.LibraryTab.Artists)
-                                            onNavigateToLibrary()
-                                        }
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                    }
-
-                    // Section Albums
-                    if (albums.isNotEmpty()) {
-                        item {
-                            SectionHeader(
-                                title = "Albums",
-                                subtitle = "${albums.size} albums",
-                                icon = Icons.Default.Album,
-                                iconTint = Color(0xFF00BCD4),
-                                onClick = {
-                                    libraryViewModel.selectTab(com.example.sonicflow.presentation.library.LibraryTab.Albums)
-                                    onNavigateToLibrary()
-                                }
-                            )
-                        }
-
-                        item {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(albums.take(10)) { album ->
-                                    AlbumCard(
-                                        name = album,
-                                        onClick = {
-                                            libraryViewModel.selectAlbum(album)
-                                            libraryViewModel.selectTab(com.example.sonicflow.presentation.library.LibraryTab.Albums)
-                                            onNavigateToLibrary()
-                                        }
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                    }
-                }
-
                 // Liste de toutes les chansons (ou résultats de recherche)
                 if (displayedTracks.isNotEmpty()) {
                     item {
@@ -503,7 +403,7 @@ fun HomeScreen(
                             track = track,
                             isPlaying = playbackState.currentTrack?.id == track.id && playbackState.isPlaying,
                             onClick = {
-                                playerViewModel.playTrack(track)
+                                playerViewModel.playTrack(track, index)
                                 onNavigateToPlayer()
                             },
                             onMenuClick = {
@@ -532,9 +432,6 @@ fun HomeScreen(
             currentSort = sortOption,
             onDismiss = { showSortMenu = false },
             onSortSelected = { newSort ->
-                // ==========================================
-                // MODIFIÉ: Utiliser le ViewModel au lieu de l'état local
-                // ==========================================
                 homeViewModel.setSortOption(newSort)
                 showSortMenu = false
             }
@@ -547,23 +444,69 @@ fun HomeScreen(
             track = showTrackMenu!!,
             onDismiss = { showTrackMenu = null },
             onPlayNext = {
-                playerViewModel.addToQueue(showTrackMenu!!)
+                playerViewModel.playNext(showTrackMenu!!)
+                showSnackbar = "Ajouté à lire ensuite"
                 showTrackMenu = null
             },
             onAddToQueue = {
                 playerViewModel.addToQueue(showTrackMenu!!)
+                showSnackbar = "Ajouté à la file d'attente"
                 showTrackMenu = null
             },
             onToggleFavorite = {
                 libraryViewModel.toggleFavorite(showTrackMenu!!.id)
+                val isFav = favoriteTracks.any { it.id == showTrackMenu!!.id }
+                showSnackbar = if (isFav) "Retiré des favoris" else "Ajouté aux favoris"
                 showTrackMenu = null
             },
             onShareTrack = {
-                // TODO: Implémenter le partage
+                try {
+                    val track = showTrackMenu!!
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "audio/*"
+
+                        // Partager le fichier audio
+                        val file = File(track.path)
+                        if (file.exists()) {
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                file
+                            )
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+
+                        putExtra(Intent.EXTRA_SUBJECT, track.title)
+                        putExtra(Intent.EXTRA_TEXT, "${track.title} - ${track.artist}")
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Partager via"))
+                    showSnackbar = "Partage en cours..."
+                } catch (e: Exception) {
+                    showSnackbar = "Erreur lors du partage"
+                }
                 showTrackMenu = null
             },
             onAddToPlaylist = {
                 showPlaylistSelector = showTrackMenu
+                showTrackMenu = null
+            },
+            onViewAlbum = {
+                // Navigation vers l'écran Album via LibraryViewModel
+                libraryViewModel.selectAlbum(showTrackMenu!!.album)
+                onNavigateToLibrary()
+                showTrackMenu = null
+            },
+            onViewArtist = {
+                // Navigation vers l'écran Artiste via LibraryViewModel
+                libraryViewModel.selectArtist(showTrackMenu!!.artist)
+                onNavigateToLibrary()
+                showTrackMenu = null
+            },
+            onDeleteTrack = {
+                playerViewModel.deleteTrack(showTrackMenu!!)
+                showSnackbar = "Piste supprimée"
                 showTrackMenu = null
             },
             isFavorite = favoriteTracks.any { it.id == showTrackMenu!!.id }
@@ -574,7 +517,7 @@ fun HomeScreen(
     if (showPlaylistSelector != null && playlists.isNotEmpty()) {
         AlertDialog(
             onDismissRequest = { showPlaylistSelector = null },
-            title = { Text("Ajouter à une playlist") },
+            title = { Text("Ajouter à une playlist", color = Color.White) },
             text = {
                 LazyColumn {
                     items(playlists) { playlist ->
@@ -586,6 +529,7 @@ fun HomeScreen(
                                         playlist.id!!,
                                         showPlaylistSelector!!.id
                                     )
+                                    showSnackbar = "Ajouté à ${playlist.name}"
                                     showPlaylistSelector = null
                                 }
                                 .padding(12.dp),
@@ -609,7 +553,7 @@ fun HomeScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showPlaylistSelector = null }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFFFFC107))
                 }
             },
             containerColor = Color(0xFF1E1E1E)
@@ -617,11 +561,19 @@ fun HomeScreen(
     } else if (showPlaylistSelector != null && playlists.isEmpty()) {
         AlertDialog(
             onDismissRequest = { showPlaylistSelector = null },
-            title = { Text("Aucune playlist") },
-            text = { Text("Créez une playlist d'abord") },
+            title = { Text("Aucune playlist", color = Color.White) },
+            text = { Text("Créez une playlist d'abord dans la bibliothèque", color = Color.Gray) },
             confirmButton = {
+                TextButton(onClick = {
+                    showPlaylistSelector = null
+                    onNavigateToLibrary()
+                }) {
+                    Text("Aller à la bibliothèque", color = Color(0xFFFFC107))
+                }
+            },
+            dismissButton = {
                 TextButton(onClick = { showPlaylistSelector = null }) {
-                    Text("OK")
+                    Text("Annuler", color = Color.Gray)
                 }
             },
             containerColor = Color(0xFF1E1E1E)
@@ -655,56 +607,56 @@ fun SortMenuDialog(
 
             Divider(color = Color.White.copy(alpha = 0.1f))
 
-            SortOption(
+            SortOptionItem(
                 text = "Titre (A-Z)",
                 icon = Icons.Default.SortByAlpha,
                 isSelected = currentSort == SortOption.TITLE_ASC,
                 onClick = { onSortSelected(SortOption.TITLE_ASC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Titre (Z-A)",
                 icon = Icons.Default.SortByAlpha,
                 isSelected = currentSort == SortOption.TITLE_DESC,
                 onClick = { onSortSelected(SortOption.TITLE_DESC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Artiste (A-Z)",
                 icon = Icons.Default.Person,
                 isSelected = currentSort == SortOption.ARTIST_ASC,
                 onClick = { onSortSelected(SortOption.ARTIST_ASC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Artiste (Z-A)",
                 icon = Icons.Default.Person,
                 isSelected = currentSort == SortOption.ARTIST_DESC,
                 onClick = { onSortSelected(SortOption.ARTIST_DESC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Album (A-Z)",
                 icon = Icons.Default.Album,
                 isSelected = currentSort == SortOption.ALBUM_ASC,
                 onClick = { onSortSelected(SortOption.ALBUM_ASC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Album (Z-A)",
                 icon = Icons.Default.Album,
                 isSelected = currentSort == SortOption.ALBUM_DESC,
                 onClick = { onSortSelected(SortOption.ALBUM_DESC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Récemment ajouté",
                 icon = Icons.Default.DateRange,
                 isSelected = currentSort == SortOption.DATE_ADDED_DESC,
                 onClick = { onSortSelected(SortOption.DATE_ADDED_DESC) }
             )
 
-            SortOption(
+            SortOptionItem(
                 text = "Anciennement ajouté",
                 icon = Icons.Default.DateRange,
                 isSelected = currentSort == SortOption.DATE_ADDED_ASC,
@@ -717,7 +669,7 @@ fun SortMenuDialog(
 }
 
 @Composable
-fun SortOption(
+fun SortOptionItem(
     text: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isSelected: Boolean,
@@ -766,6 +718,9 @@ fun TrackContextMenu(
     onToggleFavorite: () -> Unit,
     onShareTrack: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onViewAlbum: () -> Unit,
+    onViewArtist: () -> Unit,
+    onDeleteTrack: () -> Unit,
     isFavorite: Boolean
 ) {
     ModalBottomSheet(
@@ -865,13 +820,22 @@ fun TrackContextMenu(
             MenuOption(
                 icon = Icons.Default.Album,
                 text = "Voir l'album",
-                onClick = onDismiss
+                onClick = onViewAlbum
             )
 
             MenuOption(
                 icon = Icons.Default.Person,
                 text = "Voir l'artiste",
-                onClick = onDismiss
+                onClick = onViewArtist
+            )
+
+            Divider(color = Color.White.copy(alpha = 0.1f))
+
+            MenuOption(
+                icon = Icons.Default.Delete,
+                text = "Supprimer",
+                iconTint = Color(0xFFEF4444),
+                onClick = onDeleteTrack
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -907,6 +871,89 @@ fun MenuOption(
         )
     }
 }
+
+//@Composable
+//fun TrackListItem(
+//    track: Track,
+//    isPlaying: Boolean,
+//    onClick: () -> Unit,
+//    onMenuClick: () -> Unit
+//) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clickable(onClick = onClick)
+//            .padding(horizontal = 16.dp, vertical = 8.dp),
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        Box(
+//            modifier = Modifier
+//                .size(48.dp)
+//                .clip(RoundedCornerShape(6.dp))
+//        ) {
+//            if (track.albumArtUri != null) {
+//                AsyncImage(
+//                    model = track.albumArtUri,
+//                    contentDescription = "${track.title} album art",
+//                    modifier = Modifier.fillMaxSize(),
+//                    contentScale = ContentScale.Crop,
+//                    error = painterResource(id = android.R.drawable.ic_media_play)
+//                )
+//            } else {
+//                AlbumArtPlaceholder(
+//                    title = track.album,
+//                    artist = track.artist,
+//                    size = 48.dp,
+//                    cornerRadius = 6.dp
+//                )
+//            }
+//
+//            if (isPlaying) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .background(Color.Black.copy(alpha = 0.5f)),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    Icon(
+//                        Icons.Default.PlayArrow,
+//                        contentDescription = null,
+//                        tint = Color(0xFFFFC107),
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                }
+//            }
+//        }
+//
+//        Spacer(modifier = Modifier.width(12.dp))
+//        Column(modifier = Modifier.weight(1f)) {
+//            Text(
+//                track.title,
+//                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+//                fontSize = 15.sp,
+//                fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
+//                maxLines = 1,
+//                overflow = TextOverflow.Ellipsis
+//            )
+//            Spacer(modifier = Modifier.height(2.dp))
+//            Text(
+//                track.artist,
+//                color = Color.Gray,
+//                fontSize = 13.sp,
+//                maxLines = 1,
+//                overflow = TextOverflow.Ellipsis
+//            )
+//        }
+//
+//        IconButton(onClick = onMenuClick) {
+//            Icon(
+//                Icons.Default.MoreVert,
+//                contentDescription = "Options",
+//                tint = Color.Gray
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun SectionHeader(

@@ -9,6 +9,7 @@ import com.example.sonicflow.data.model.RepeatMode
 import com.example.sonicflow.data.model.SortType
 import com.example.sonicflow.data.model.Track
 import com.example.sonicflow.data.model.GenreAnalysis
+import com.example.sonicflow.data.database.entities.PlayHistoryEntity
 import com.example.sonicflow.data.preferences.AudioQuality
 import com.example.sonicflow.data.preferences.Language
 import com.example.sonicflow.data.repository.MusicRepository
@@ -18,6 +19,7 @@ import com.example.sonicflow.data.preferences.LanguagePreferences
 import com.example.sonicflow.service.MusicServiceConnection
 import com.example.sonicflow.service.GenreDetectionService
 import com.example.sonicflow.service.EqualizerService
+import com.example.sonicflow.data.database.dao.PlayHistoryDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -31,7 +33,8 @@ class PlayerViewModel @Inject constructor(
     private val genreDetectionService: GenreDetectionService,
     private val equalizerService: EqualizerService,
     private val audioPreferences: AudioPreferences,
-    private val languagePreferences: LanguagePreferences
+    private val languagePreferences: LanguagePreferences,
+    private val playHistoryDao: PlayHistoryDao
 ) : ViewModel() {
 
     private val _tracks = MutableStateFlow<List<Track>>(emptyList())
@@ -76,7 +79,6 @@ class PlayerViewModel @Inject constructor(
     // Language
     val language = languagePreferences.language
 
-    // Queue management
     private val _queue = MutableStateFlow<List<Track>>(emptyList())
     val queue: StateFlow<List<Track>> = _queue.asStateFlow()
 
@@ -243,6 +245,7 @@ class PlayerViewModel @Inject constructor(
 
                 if (currentTrack != null && !isRestoringState && position > 1000) {
                     savePlaybackState(currentTrack.id, position, isPlaying)
+                    addTrackToRecentlyPlayed(currentTrack.id)
                 }
 
                 PlaybackState(
@@ -273,6 +276,15 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun playTrack(track: Track, startIndex: Int = 0, autoPlay: Boolean = true) {
+        // Check if the track is already playing to avoid unnecessary setup
+        val currentTrack = _playbackState.value.currentTrack
+        val isAlreadyPlaying = currentTrack?.id == track.id && _playbackState.value.isPlaying
+
+        if (isAlreadyPlaying) {
+            // Track is already playing, just ensure it stays playing
+            return
+        }
+
         val tracksToPlay = if (_isShuffleEnabled.value) {
             val shuffled = _tracks.value.shuffled().toMutableList()
             shuffled.remove(track)
@@ -315,6 +327,14 @@ class PlayerViewModel @Inject constructor(
                     RepeatMode.ALL -> Player.REPEAT_MODE_ALL
                 }
             )
+        }
+
+        // Ajouter à l'historique
+        viewModelScope.launch {
+            playHistoryDao.insertPlayHistory(
+                PlayHistoryEntity(trackId = track.id)
+            )
+            playHistoryDao.cleanOldHistory()
         }
     }
 
@@ -418,6 +438,20 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    fun deleteTrack(track: Track) {
+        viewModelScope.launch {
+            musicRepository.deleteTrack(track.id)
+            // Reload tracks after deletion
+            loadTracks()
+        }
+    }
+
+    private fun addTrackToRecentlyPlayed(trackId: Long) {
+        viewModelScope.launch {
+            musicRepository.addToRecentlyPlayed(trackId)
+        }
+    }
+
     fun refreshTracks() {
         loadTracks()
     }
@@ -463,6 +497,7 @@ class PlayerViewModel @Inject constructor(
             _queue.value = currentQueue
         }
     }
+
 
     // Playback speed control
     fun setPlaybackSpeed(speed: Float) {

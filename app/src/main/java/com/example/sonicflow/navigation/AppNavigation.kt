@@ -14,7 +14,6 @@ import com.example.sonicflow.presentation.home.HomeScreen
 import com.example.sonicflow.presentation.library.LibraryScreen
 import com.example.sonicflow.presentation.player.MusicPlayerScreen
 import com.example.sonicflow.presentation.player.PlayerViewModel
-import com.example.sonicflow.presentation.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -41,9 +40,6 @@ fun AppNavigation() {
                             },
                             onNavigateToLibrary = {
                                 navController.navigate(Screen.Library.route)
-                            },
-                            onNavigateToSettings = {
-                                navController.navigate(Screen.Settings.route)
                             }
                         )
                     }
@@ -63,14 +59,6 @@ fun AppNavigation() {
                         val playerViewModel: PlayerViewModel = hiltViewModel()
                         MusicPlayerScreen(
                             viewModel = playerViewModel,
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-
-                    composable(Screen.Settings.route) {
-                        SettingsScreen(
                             onNavigateBack = {
                                 navController.popBackStack()
                             }

@@ -132,72 +132,7 @@ fun AudioSettingsSection(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Language Section
-            Text(
-                text = "Langue",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = Color(0xFF252525),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(8.dp)
-            ) {
-                Language.values().forEach { language ->
-                    LanguageItemInSettings(
-                        language = language,
-                        isSelected = currentLanguage == language,
-                        onClick = { onLanguageChange(language) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-fun LanguageItemInSettings(
-    language: Language,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = language.displayName,
-            color = Color.White,
-            fontSize = 14.sp
-        )
-        if (isSelected) {
-            Surface(
-                color = Color(0xFF7C3AED),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Text(
-                    text = "✓",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(4.dp)
-                )
-            }
         }
     }
 }

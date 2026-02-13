@@ -25,7 +25,8 @@ class MusicRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val trackDao: TrackDao,
     private val favoriteDao: FavoriteDao,
-    private val playlistDao: PlaylistDao
+    private val playlistDao: PlaylistDao,
+    private val recentlyPlayedDao: com.example.sonicflow.data.database.dao.RecentlyPlayedDao
 ) {
 
     // ========== TRACKS ==========
@@ -173,6 +174,29 @@ class MusicRepository @Inject constructor(
         favoriteDao.removeFavorite(trackId)
     }
 
+    // ========== RECENTLY PLAYED ==========
+    fun getRecentlyPlayedTracks(limit: Int = 20): Flow<List<Track>> {
+        return recentlyPlayedDao.getRecentlyPlayedTrackIds(limit).flatMapLatest { trackIds ->
+            getAllTracks().map { allTracks ->
+                trackIds.mapNotNull { id ->
+                    allTracks.find { it.id == id }
+                }
+            }
+        }
+    }
+
+    suspend fun addToRecentlyPlayed(trackId: Long) {
+        recentlyPlayedDao.addRecentlyPlayed(
+            com.example.sonicflow.data.database.entities.RecentlyPlayedEntity(
+                trackId = trackId
+            )
+        )
+    }
+
+    suspend fun clearRecentlyPlayed() {
+        recentlyPlayedDao.clearRecentlyPlayed()
+    }
+
     // ========== ARTISTES ==========
     fun getAllArtists(): Flow<List<String>> {
         return getAllTracks().map { tracks ->
@@ -255,5 +279,15 @@ class MusicRepository @Inject constructor(
 
     suspend fun getPlaylistTrackCount(playlistId: Long): Flow<Int> {
         return playlistDao.getPlaylistTrackCount(playlistId)
+    }
+
+    // ========== TRACK MANAGEMENT ==========
+    suspend fun deleteTrack(trackId: Long) {
+        val track = trackDao.getTrackById(trackId)
+        if (track != null) {
+            trackDao.deleteTrack(track)
+            // Also remove from favorites if it's in favorites
+            removeFromFavorites(trackId)
+        }
     }
 }
