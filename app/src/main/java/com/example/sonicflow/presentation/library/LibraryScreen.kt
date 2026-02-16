@@ -178,7 +178,7 @@ fun LibraryScreen(
                     unfocusedContainerColor = Color(0xFF1E1E1E),
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFFFFC107),
+                    focusedBorderColor = Color(0xFFFF6600),
                     unfocusedBorderColor = Color.Gray
                 ),
                 singleLine = true
@@ -336,7 +336,7 @@ fun TracksListView(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = Color(0xFFFFC107))
+            CircularProgressIndicator(color = Color(0xFFFF6600))
         }
     } else if (tracks.isEmpty()) {
         Box(
@@ -427,7 +427,7 @@ fun AlbumDetailView(
                                 Icon(
                                     imageVector = Icons.Default.MusicNote,
                                     contentDescription = "Loading",
-                                    tint = Color(0xFFFFC107).copy(alpha = 0.5f),
+                                    tint = Color(0xFFFF6600).copy(alpha = 0.5f),
                                     modifier = Modifier.size(48.dp)
                                 )
                             }
@@ -586,7 +586,7 @@ fun TabChip(
         modifier = Modifier
             .clickable(onClick = onClick)
             .clip(RoundedCornerShape(20.dp)),
-        color = if (isSelected) Color(0xFFFFC107) else Color(0xFF2A2A2A),
+        color = if (isSelected) Color(0xFFFF6600) else Color(0xFF2A2A2A),
         shape = RoundedCornerShape(20.dp)
     ) {
         Text(
@@ -751,7 +751,7 @@ fun TrackItem(
                             Icon(
                                 imageVector = Icons.Default.MusicNote,
                                 contentDescription = "Loading",
-                                tint = Color(0xFFFFC107).copy(alpha = 0.5f),
+                                tint = Color(0xFFFF6600).copy(alpha = 0.5f),
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -782,7 +782,7 @@ fun TrackItem(
         ) {
             Text(
                 text = track.title,
-                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+                color = if (isPlaying) Color(0xFFFF6600) else Color.White,
                 fontSize = 16.sp,
                 fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
@@ -802,7 +802,7 @@ fun TrackItem(
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Playing",
-                tint = Color(0xFFFFC107),
+                tint = Color(0xFFFF6600),
                 modifier = Modifier.size(24.dp)
             )
         }

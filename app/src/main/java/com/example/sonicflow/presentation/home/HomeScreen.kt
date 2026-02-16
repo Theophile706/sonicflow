@@ -186,7 +186,7 @@ fun HomeScreen(
                     snackbarData = data,
                     containerColor = Color(0xFF2D2D2D),
                     contentColor = Color.White,
-                    actionColor = Color(0xFFFFC107)
+                    actionColor = Color(0xFF4CAF50)
                 )
             }
         },
@@ -209,7 +209,7 @@ fun HomeScreen(
                                 unfocusedContainerColor = Color.Transparent,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
-                                cursorColor = Color(0xFFFFC107),
+                                cursorColor = Color(0xFF4CAF50),
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent
                             ),
@@ -299,7 +299,7 @@ fun HomeScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 CircularProgressIndicator(
-                                    color = Color(0xFFFFC107),
+                                    color = Color(0xFFFF6600),
                                     modifier = Modifier.size(48.dp)
                                 )
                                 Text(
@@ -348,7 +348,7 @@ fun HomeScreen(
                                     Button(
                                         onClick = { permissionsState.launchMultiplePermissionRequest() },
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFFFFC107)
+                                            containerColor = Color(0xFFFF6600)
                                         )
                                     ) {
                                         Text(
@@ -392,7 +392,7 @@ fun HomeScreen(
                                 Icon(
                                     Icons.Default.Sort,
                                     contentDescription = "Trier",
-                                    tint = Color(0xFFFFC107)
+                                    tint = Color(0xFF4CAF50)
                                 )
                             }
                         }
@@ -539,7 +539,7 @@ fun HomeScreen(
                                 Icons.Default.LibraryMusic,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = Color(0xFFFFC107)
+                                tint = Color(0xFFFF6600)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
@@ -553,7 +553,7 @@ fun HomeScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showPlaylistSelector = null }) {
-                    Text("Annuler", color = Color(0xFFFFC107))
+                    Text("Annuler", color = Color(0xFFFF6600))
                 }
             },
             containerColor = Color(0xFF1E1E1E)
@@ -568,7 +568,7 @@ fun HomeScreen(
                     showPlaylistSelector = null
                     onNavigateToLibrary()
                 }) {
-                    Text("Aller à la bibliothèque", color = Color(0xFFFFC107))
+                    Text("Aller à la bibliothèque", color = Color(0xFFFF6600))
                 }
             },
             dismissButton = {
@@ -679,20 +679,20 @@ fun SortOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .background(if (isSelected) Color(0xFFFFC107).copy(alpha = 0.1f) else Color.Transparent)
+            .background(if (isSelected) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color.Transparent)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             icon,
             contentDescription = null,
-            tint = if (isSelected) Color(0xFFFFC107) else Color.White,
+            tint = if (isSelected) Color(0xFF4CAF50) else Color.White,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text,
-            color = if (isSelected) Color(0xFFFFC107) else Color.White,
+            color = if (isSelected) Color(0xFF4CAF50) else Color.White,
             fontSize = 16.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.weight(1f)
@@ -701,7 +701,7 @@ fun SortOptionItem(
             Icon(
                 Icons.Default.Check,
                 contentDescription = "Sélectionné",
-                tint = Color(0xFFFFC107),
+                tint = Color(0xFF4CAF50),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -1054,7 +1054,7 @@ fun FavoriteTrackCard(
                     Icon(
                         Icons.Default.PlayArrow,
                         contentDescription = null,
-                        tint = Color(0xFFFFC107),
+                        tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(48.dp)
                     )
                 }
@@ -1211,7 +1211,7 @@ fun TrackListItem(
                     Icon(
                         Icons.Default.PlayArrow,
                         contentDescription = null,
-                        tint = Color(0xFFFFC107),
+                        tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1222,7 +1222,7 @@ fun TrackListItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 track.title,
-                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+                color = if (isPlaying) Color(0xFF4CAF50) else Color.White,
                 fontSize = 15.sp,
                 fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,

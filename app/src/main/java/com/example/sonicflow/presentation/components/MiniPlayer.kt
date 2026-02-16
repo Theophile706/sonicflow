@@ -125,7 +125,7 @@ fun MiniPlayer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(3.dp),
-                    color = Color(0xFFFFC107),
+                    color = Color(0xFFFF6600),
                     trackColor = Color.Gray.copy(alpha = 0.3f)
                 )
             }

@@ -126,7 +126,7 @@ fun AlbumsScreen(
                             Icon(
                                 Icons.Default.QueueMusic,
                                 contentDescription = null,
-                                tint = Color(0xFFFFC107),
+                                tint = Color(0xFFFF6600),
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -166,7 +166,7 @@ fun AlbumsScreen(
                                     unfocusedContainerColor = Color.Transparent,
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White,
-                                    cursorColor = Color(0xFFFFC107),
+                                    cursorColor = Color(0xFFFF6600),
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
@@ -346,7 +346,7 @@ fun TrackItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = track.title,
-                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+                color = if (isPlaying) Color(0xFFFF6600) else Color.White,
                 fontSize = 16.sp,
                 fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,

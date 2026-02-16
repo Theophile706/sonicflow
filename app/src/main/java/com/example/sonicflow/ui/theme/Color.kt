@@ -36,7 +36,7 @@ val TextGray = Color(0xFF6B7280)
 // Additional Colors
 val ErrorColor = Color(0xFFEF4444)
 val SuccessColor = Color(0xFF10B981)
-val WarningColor = Color(0xFFF59E0B)
+val WarningColor = Color(0xFFFF6600)
 val InfoColor = Color(0xFF3B82F6)
 
 // Player Colors

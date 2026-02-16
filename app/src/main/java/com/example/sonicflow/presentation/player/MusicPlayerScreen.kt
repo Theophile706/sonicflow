@@ -883,8 +883,8 @@ fun AnimatedWaveform(
                 // Couleur basée sur la position de lecture
                 val barColor = when {
                     isNearPlayhead -> Color(0xFFFF6B35)
-                    isBarPlayed -> Color(0xFFFFC107).copy(alpha = 0.9f)
-                    else -> Color(0xFFFFC107).copy(alpha = 0.4f)
+                    isBarPlayed -> Color(0xFFFF6600).copy(alpha = 0.9f)
+                    else -> Color(0xFFFF6600).copy(alpha = 0.4f)
                 }
 
                 drawLine(

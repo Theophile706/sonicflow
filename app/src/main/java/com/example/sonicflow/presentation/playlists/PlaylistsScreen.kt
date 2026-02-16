@@ -430,7 +430,7 @@ fun PlaylistListItem(
             Icon(
                 Icons.Default.LibraryMusic,
                 contentDescription = null,
-                tint = Color(0xFFFFC107),
+                tint = Color(0xFFFF6600),
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -510,7 +510,7 @@ fun PlaylistTrackItem(
                         Icon(
                             imageVector = Icons.Default.MusicNote,
                             contentDescription = "Loading",
-                            tint = Color(0xFFFFC107).copy(alpha = 0.5f),
+                            tint = Color(0xFFFF6600).copy(alpha = 0.5f),
                             modifier = Modifier.size(32.dp)
                         )
                     },
@@ -518,7 +518,7 @@ fun PlaylistTrackItem(
                         Icon(
                             imageVector = Icons.Default.MusicNote,
                             contentDescription = "No Album Art",
-                            tint = Color(0xFFFFC107),
+                            tint = Color(0xFFFF6600),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -527,7 +527,7 @@ fun PlaylistTrackItem(
                 Icon(
                     imageVector = Icons.Default.MusicNote,
                     contentDescription = "No Album Art",
-                    tint = Color(0xFFFFC107),
+                    tint = Color(0xFFFF6600),
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -538,7 +538,7 @@ fun PlaylistTrackItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = track.title,
-                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+                color = if (isPlaying) Color(0xFFFF6600) else Color.White,
                 fontSize = 16.sp,
                 fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
@@ -577,7 +577,7 @@ fun CreatePlaylistDialog(
         Color(0xFF06B6D4) to "Cyan",
         Color(0xFFEF4444) to "Red",
         Color(0xFF10B981) to "Green",
-        Color(0xFFF59E0B) to "Amber",
+        Color(0xFFFF6600) to "Amber",
         Color(0xFF3B82F6) to "Blue"
     )
 

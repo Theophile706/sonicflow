@@ -24,13 +24,13 @@ fun BottomNavBar(
                 Icon(
                     Icons.Default.Home,
                     "Musique",
-                    tint = if (currentRoute == "home") Color(0xFFFFC107) else Color.Gray
+                    tint = if (currentRoute == "home") Color(0xFF00FF00) else Color.Gray
                 )
             },
             label = {
                 Text(
                     "Musique",
-                    color = if (currentRoute == "home") Color(0xFFFFC107) else Color.Gray,
+                    color = if (currentRoute == "home") Color(0xFF00FF00) else Color.Gray,
                     fontSize = 11.sp
                 )
             },
@@ -42,13 +42,13 @@ fun BottomNavBar(
                 Icon(
                     Icons.Default.Person,
                     "Artiste",
-                    tint = if (currentRoute == "artists") Color(0xFFFFC107) else Color.Gray
+                    tint = if (currentRoute == "artists") Color(0xFF00FF00) else Color.Gray
                 )
             },
             label = {
                 Text(
                     "Artiste",
-                    color = if (currentRoute == "artists") Color(0xFFFFC107) else Color.Gray,
+                    color = if (currentRoute == "artists") Color(0xFF00FF00) else Color.Gray,
                     fontSize = 11.sp
                 )
             },
@@ -60,13 +60,13 @@ fun BottomNavBar(
                 Icon(
                     Icons.Default.Album,
                     "Albums",
-                    tint = if (currentRoute == "albums") Color(0xFFFFC107) else Color.Gray
+                    tint = if (currentRoute == "albums") Color(0xFF00FF00) else Color.Gray
                 )
             },
             label = {
                 Text(
                     "Albums",
-                    color = if (currentRoute == "albums") Color(0xFFFFC107) else Color.Gray,
+                    color = if (currentRoute == "albums") Color(0xFF00FF00) else Color.Gray,
                     fontSize = 11.sp
                 )
             },
@@ -78,13 +78,13 @@ fun BottomNavBar(
                 Icon(
                     Icons.Default.LibraryMusic,
                     "Listes",
-                    tint = if (currentRoute == "playlists") Color(0xFFFFC107) else Color.Gray
+                    tint = if (currentRoute == "playlists") Color(0xFF00FF00) else Color.Gray
                 )
             },
             label = {
                 Text(
                     "Listes",
-                    color = if (currentRoute == "playlists") Color(0xFFFFC107) else Color.Gray,
+                    color = if (currentRoute == "playlists") Color(0xFF00FF00) else Color.Gray,
                     fontSize = 10.sp
                 )
             },

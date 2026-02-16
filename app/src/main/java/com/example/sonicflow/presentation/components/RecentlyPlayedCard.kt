@@ -133,7 +133,7 @@ fun RecentlyPlayedCard(
                             .padding(horizontal = 8.dp)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = Color(0xFFFFC107),
+                        color = Color(0xFFFF6600),
                         trackColor = Color.White.copy(alpha = 0.2f)
                     )
 
@@ -171,7 +171,7 @@ fun RecentlyPlayedCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFC107))
+                        .background(Color(0xFFFF6600))
                 ) {
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,

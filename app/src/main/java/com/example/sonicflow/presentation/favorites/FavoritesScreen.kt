@@ -150,7 +150,7 @@ fun FavoriteTrackItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = track.title,
-                color = if (isPlaying) Color(0xFFFFC107) else Color.White,
+                color = if (isPlaying) Color(0xFFFF6600) else Color.White,
                 fontSize = 16.sp,
                 fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
